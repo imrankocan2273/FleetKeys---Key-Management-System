@@ -1,0 +1,107 @@
+:root {
+  --bg: #ffffff;
+  --blue: #4f8fb3;
+  --blue-soft: #3f7a9b;
+  --line: #c8dbea;
+}
+
+html,
+body,
+main#spapp,
+main#spapp > section {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  background: var(--bg);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.login-page {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-logo {
+  width: min(320px, 62vw);
+  height: auto;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.login-form,
+.session-panel {
+  width: min(420px, 86vw);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: -56px;
+}
+
+.login-form label {
+  color: var(--blue);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.login-form input {
+  height: 46px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0 14px;
+  font-size: 15px;
+  color: #1f2a37;
+  background: #ffffff;
+}
+
+.login-form input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(79, 143, 179, 0.2);
+}
+
+.login-form button,
+.session-panel button {
+  margin-top: 10px;
+  height: 48px;
+  border: none;
+  border-radius: 10px;
+  background: var(--blue);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login-form button:hover,
+.session-panel button:hover {
+  background: var(--blue-soft);
+}
+
+.login-form button:disabled,
+.session-panel button:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+.login-message {
+  min-height: 20px;
+  margin: 4px 2px 0;
+  color: var(--blue);
+  font-size: 13px;
+}
+
+.session-panel p {
+  margin: 0;
+  color: var(--blue);
+  text-align: center;
+  font-weight: 600;
+}
+
+.hidden {
+  display: none;
+}

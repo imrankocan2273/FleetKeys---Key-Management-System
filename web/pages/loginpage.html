@@ -1,0 +1,19 @@
+<section class="login-page" aria-label="Login page">
+  <img class="login-logo" src="assets/logo/logo.png" alt="FleetKeys logo" />
+
+  <form id="login-form" class="login-form" autocomplete="on">
+    <label for="username">Username</label>
+    <input id="username" name="username" type="text" placeholder="Enter username" required />
+
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" placeholder="Enter password" required />
+
+    <button id="login-btn" type="submit">Login</button>
+    <p id="login-message" class="login-message" aria-live="polite"></p>
+  </form>
+
+  <section id="session-panel" class="session-panel hidden" aria-live="polite">
+    <p>You are logged in.</p>
+    <button id="logout-btn" type="button">Logout</button>
+  </section>
+</section>
