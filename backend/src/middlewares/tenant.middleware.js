@@ -1,4 +1,4 @@
-const { loadUserCompanyProfile } = require('../services/auth.service');
+const { loadUserCompanyContext } = require('../services/auth.service');
 
 async function requireTenantContext(req, res, next) {
   const authUserId = req.auth?.user?.id;
@@ -6,20 +6,20 @@ async function requireTenantContext(req, res, next) {
     return res.status(401).json({ message: 'Unauthorized' });
   }
 
-  const profileResult = await loadUserCompanyProfile({ authUserId });
-  if (!profileResult.ok) {
+  const contextResult = await loadUserCompanyContext({ authUserId });
+  if (!contextResult.ok) {
     return res.status(403).json({
-      message: 'User has no tenant profile',
-      details: profileResult.error,
+      message: 'User has no tenant company_users context',
+      details: contextResult.error,
     });
   }
 
   req.context = {
     user_id: authUserId,
-    role: profileResult.profile.role,
-    company_id: profileResult.profile.company_id,
-    company_name: profileResult.profile.company_name,
-    business_type: profileResult.profile.business_type,
+    role: contextResult.context.role,
+    company_id: contextResult.context.company_id,
+    company_name: contextResult.context.company_name,
+    business_type: contextResult.context.business_type,
   };
 
   return next();
