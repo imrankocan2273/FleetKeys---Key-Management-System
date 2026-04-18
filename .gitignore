@@ -25,3 +25,9 @@ ios/Flutter/ephemeral/
 # IDE
 .idea/
 .vscode/
+
+# Private SQL docs
+docs/supabase/
+
+# Private SQL docs
+docs/supabase/

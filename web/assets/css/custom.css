@@ -17,7 +17,8 @@ main#spapp > section {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.login-page {
+.login-page,
+.admin-page {
   min-height: 100vh;
   background: var(--bg);
   display: flex;
@@ -34,21 +35,30 @@ main#spapp > section {
 }
 
 .login-form,
-.session-panel {
+.admin-page {
   width: min(420px, 86vw);
+}
+
+.login-form,
+.create-user-form {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.login-form {
   margin-top: -56px;
 }
 
-.login-form label {
+.login-form label,
+.create-user-form label {
   color: var(--blue);
   font-weight: 600;
   font-size: 14px;
 }
 
-.login-form input {
+.login-form input,
+.create-user-form input {
   height: 46px;
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -58,14 +68,16 @@ main#spapp > section {
   background: #ffffff;
 }
 
-.login-form input:focus {
+.login-form input:focus,
+.create-user-form input:focus {
   outline: none;
   border-color: var(--blue);
   box-shadow: 0 0 0 3px rgba(79, 143, 179, 0.2);
 }
 
 .login-form button,
-.session-panel button {
+.admin-page button,
+.create-user-form button {
   margin-top: 10px;
   height: 48px;
   border: none;
@@ -78,30 +90,45 @@ main#spapp > section {
 }
 
 .login-form button:hover,
-.session-panel button:hover {
+.admin-page button:hover,
+.create-user-form button:hover {
   background: var(--blue-soft);
 }
 
 .login-form button:disabled,
-.session-panel button:disabled {
+.admin-page button:disabled,
+.create-user-form button:disabled {
   opacity: 0.75;
   cursor: not-allowed;
 }
 
-.login-message {
+.login-message,
+.create-user-message {
   min-height: 20px;
   margin: 4px 2px 0;
   color: var(--blue);
   font-size: 13px;
 }
 
-.session-panel p {
+.admin-page h1,
+.admin-meta {
   margin: 0;
   color: var(--blue);
   text-align: center;
-  font-weight: 600;
 }
 
-.hidden {
-  display: none;
+.admin-page h1 {
+  font-size: 34px;
+  margin-bottom: 8px;
+}
+
+.admin-meta {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.create-user-form {
+  margin-top: 16px;
+  margin-bottom: 10px;
 }

@@ -5,7 +5,7 @@ import '../services/auth_service.dart';
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key, required this.onLoginSuccess});
 
-  final ValueChanged<String> onLoginSuccess;
+  final ValueChanged<LoginResult> onLoginSuccess;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -34,18 +34,13 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _loading = true);
 
     try {
-      final token = await _authService.login(
+      final result = await _authService.login(
         username: _usernameController.text.trim(),
         password: _passwordController.text,
       );
 
       if (!mounted) return;
-
-      if (token == null || token.isEmpty) {
-        throw Exception('Missing access token');
-      }
-
-      widget.onLoginSuccess(token);
+      widget.onLoginSuccess(result);
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

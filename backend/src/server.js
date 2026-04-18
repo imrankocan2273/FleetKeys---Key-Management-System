@@ -3,6 +3,8 @@ const cors = require('cors');
 
 const { env, validateEnv } = require('./config/env');
 const { authRouter } = require('./routes/auth.routes');
+const { protectedRouter } = require('./routes/protected.routes');
+const { adminUserRouter } = require('./routes/admin-user.routes');
 
 validateEnv();
 
@@ -16,6 +18,8 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRouter);
+app.use('/api/protected', protectedRouter);
+app.use('/api/admin', adminUserRouter);
 
 app.use((_req, res) => {
   res.status(404).json({ message: 'Route not found' });

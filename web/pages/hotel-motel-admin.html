@@ -1,0 +1,21 @@
+<section class="admin-page" aria-label="Hotel and motel admin page">
+  <img class="login-logo" src="assets/logo/logo.png" alt="FleetKeys logo" />
+  <h1>Hotel/Motel Admin</h1>
+  <p class="admin-meta">Business type: hotel/motel</p>
+
+  <form id="create-user-form" class="create-user-form" autocomplete="on">
+    <label for="new-full-name">Full name</label>
+    <input id="new-full-name" name="new-full-name" type="text" placeholder="Enter full name" />
+
+    <label for="new-username">Username (email)</label>
+    <input id="new-username" name="new-username" type="email" placeholder="Enter user email" required />
+
+    <label for="new-password">Password</label>
+    <input id="new-password" name="new-password" type="password" placeholder="Enter password (min 8 chars)" required />
+
+    <button id="create-user-btn" type="submit">Create User</button>
+    <p id="create-user-message" class="create-user-message" aria-live="polite"></p>
+  </form>
+
+  <button id="logout-btn" type="button">Logout</button>
+</section>
