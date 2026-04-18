@@ -1,27 +1,15 @@
 const {
   loginWithPassword,
-  loadUserCompanyProfile,
+  loadUserCompanyContext,
   logoutWithAccessToken,
 } = require('../services/auth.service');
 
-function isClientRoleAllowed({ clientType, role }) {
-  if (clientType === 'web_admin') return role === 'admin';
-  if (clientType === 'mobile_user') return role === 'user';
-  return false;
-}
-
 async function login(req, res) {
-  const { username, password, client_type: clientType } = req.body || {};
+  const { username, password } = req.body || {};
 
-  if (!username || !password || !clientType) {
+  if (!username || !password) {
     return res.status(400).json({
-      message: 'username, password and client_type are required',
-    });
-  }
-
-  if (!['web_admin', 'mobile_user'].includes(clientType)) {
-    return res.status(400).json({
-      message: 'client_type must be web_admin or mobile_user',
+      message: 'username and password are required',
     });
   }
 
@@ -37,25 +25,18 @@ async function login(req, res) {
     });
   }
 
-  const profileResult = await loadUserCompanyProfile({
+  const contextResult = await loadUserCompanyContext({
     authUserId: authResult.user?.id,
   });
 
-  if (!profileResult.ok) {
+  if (!contextResult.ok) {
     return res.status(403).json({
-      message: 'User is not assigned to any company profile',
-      details: profileResult.error,
+      message: 'User is not assigned to any company user context',
+      details: contextResult.error,
     });
   }
 
-  const profile = profileResult.profile;
-
-  if (!isClientRoleAllowed({ clientType, role: profile.role })) {
-    return res.status(403).json({
-      message: 'Role is not allowed for this client type',
-      details: `client_type=${clientType}, role=${profile.role}`,
-    });
-  }
+  const context = contextResult.context;
 
   return res.status(200).json({
     message: 'Login successful',
@@ -65,7 +46,7 @@ async function login(req, res) {
       id: authResult.user?.id,
       email: authResult.user?.email,
     },
-    profile,
+    profile: context,
   });
 }
 

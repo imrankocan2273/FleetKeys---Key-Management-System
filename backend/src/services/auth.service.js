@@ -1,6 +1,18 @@
 const { createClient } = require('@supabase/supabase-js');
-const { supabase } = require('../config/supabase');
+const { supabase, supabaseAdmin } = require('../config/supabase');
 const { env } = require('../config/env');
+
+function normalizeBusinessType(rawBusinessType, rawIndustry) {
+  const businessType = String(rawBusinessType || '').trim().toLowerCase();
+  if (businessType === 'hotel/motel' || businessType === 'hotel-motel') return 'hotel/motel';
+  if (businessType === 'rent-a-car') return 'rent-a-car';
+
+  const industry = String(rawIndustry || '').trim().toLowerCase();
+  if (industry === 'hotel_motel') return 'hotel/motel';
+  if (industry === 'rent_a_car') return 'rent-a-car';
+
+  return null;
+}
 
 async function loginWithPassword({ email, password }) {
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -19,10 +31,10 @@ async function loginWithPassword({ email, password }) {
   };
 }
 
-async function loadUserCompanyProfile({ authUserId }) {
-  const { data, error } = await supabase
+async function loadUserCompanyContext({ authUserId }) {
+  const { data, error } = await supabaseAdmin
     .from('company_users')
-    .select('role, company_id, companies(name, business_type)')
+    .select('role, company_id')
     .eq('auth_user_id', authUserId)
     .limit(1)
     .maybeSingle();
@@ -32,18 +44,42 @@ async function loadUserCompanyProfile({ authUserId }) {
   }
 
   if (!data) {
-    return { ok: false, error: 'No company profile found for this user' };
+    return { ok: false, error: 'No company_users row found for this user' };
   }
 
-  const company = Array.isArray(data.companies) ? data.companies[0] : data.companies;
+  let companyResult = await supabaseAdmin
+    .from('companies')
+    .select('name, business_type')
+    .eq('id', data.company_id)
+    .limit(1)
+    .maybeSingle();
+
+  if (companyResult.error && String(companyResult.error.message || '').includes('business_type')) {
+    companyResult = await supabaseAdmin
+      .from('companies')
+      .select('name, industry')
+      .eq('id', data.company_id)
+      .limit(1)
+      .maybeSingle();
+  }
+
+  if (companyResult.error) {
+    return { ok: false, error: companyResult.error.message };
+  }
+
+  const company = companyResult.data;
+  const normalizedBusinessType = normalizeBusinessType(
+    company?.business_type,
+    company?.industry
+  );
 
   return {
     ok: true,
-    profile: {
+    context: {
       role: data.role,
       company_id: data.company_id,
       company_name: company?.name || null,
-      business_type: company?.business_type || null,
+      business_type: normalizedBusinessType,
     },
   };
 }
@@ -72,6 +108,6 @@ async function logoutWithAccessToken({ accessToken }) {
 
 module.exports = {
   loginWithPassword,
-  loadUserCompanyProfile,
+  loadUserCompanyContext,
   logoutWithAccessToken,
 };
