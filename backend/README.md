@@ -15,6 +15,8 @@
 Run SQL files in order from `docs/supabase/`:
 1. `001_foundation.sql`
 2. `002_profile_query.sql`
+3. `003_add_position_to_company_users.sql`
+4. `004_keys_and_events.sql`
 
 ## API
 
@@ -65,7 +67,8 @@ Body:
 {
   "username": "new.user@email.com",
   "password": "strongpassword",
-  "full_name": "New User"
+  "full_name": "New User",
+  "position": "Receptionist"
 }
 ```
 
@@ -74,3 +77,47 @@ Behavior:
 - Inserts user into `company_users` with role `user`
 - Enforces same `company_id` as current admin
 - Rolls back auth user if DB insert fails
+
+## Keys management
+
+### `GET /api/keys`
+List keys for tenant company. Supports optional `?status=available|checked_out|lost|maintenance`.
+
+### `GET /api/keys/:keyId`
+Get key by id in tenant company.
+
+### `POST /api/keys` (admin)
+Create new key.
+
+Body:
+```json
+{
+  "key_code": "RC-A17",
+  "status": "available",
+  "note": "Optional note"
+}
+```
+
+### `PATCH /api/keys/:keyId` (admin)
+Update key fields (`key_code`, `status`, `note`).
+
+### `DELETE /api/keys/:keyId` (admin)
+Delete key.
+
+### `GET /api/keys/:keyId/events`
+List taken/returned events for a key.
+
+### `POST /api/keys/:keyId/events`
+Insert `taken`/`returned` event and update key status accordingly.
+
+### `POST /api/keys/scan`
+QR scan flow endpoint (calls SQL function `scan_key_event`).
+
+Body:
+```json
+{
+  "qr_token": "fk_...",
+  "action": "taken",
+  "message": "Optional scan message"
+}
+```
