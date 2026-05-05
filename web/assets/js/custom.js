@@ -1214,7 +1214,13 @@ $(document).ready(function() {
             client_type: 'web_admin'
           });
 
-          window.location.hash = 'homepage';
+          const targetRoute = routeForBusinessType(payload.profile?.business_type);
+          if (targetRoute === 'loginpage') {
+            message.textContent = 'Login succeeded, but company business_type is missing/invalid.';
+            return;
+          }
+
+          window.location.hash = targetRoute;
         } catch (error) {
           message.textContent = error.message || 'Login failed';
         } finally {
