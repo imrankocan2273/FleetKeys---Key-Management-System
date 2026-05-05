@@ -11,6 +11,8 @@ Milestone 2 is completed as an initial functional release.
 
 ## Implemented in Milestone 2
 
+ADMIN LOGIN CREDENTIALS: imrankocan2273@gmail.com 12345678
+USER LOGIN : YOU CAN CREATE YOURSELF OR USE test.test@gmail.com testtest
 ### Backend architecture
 - DAO layer
 - Service layer
