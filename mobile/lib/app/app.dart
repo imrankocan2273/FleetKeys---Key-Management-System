@@ -1,8 +1,11 @@
+import 'dart:async';
+
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 
-import '../screens/hotel_motel_user_screen.dart';
+import '../screens/homepage_screen.dart';
+import '../screens/key_scan_action_screen.dart';
 import '../screens/login_screen.dart';
-import '../screens/rent_a_car_user_screen.dart';
 import '../services/auth_service.dart';
 import '../services/session_service.dart';
 
@@ -16,15 +19,28 @@ class FleetKeysApp extends StatefulWidget {
 class _FleetKeysAppState extends State<FleetKeysApp> {
   final _sessionService = SessionService();
   final _authService = AuthService();
+  final _appLinks = AppLinks();
 
   AppSession? _session;
   bool _bootstrapping = true;
   bool _loggingOut = false;
+  StreamSubscription<Uri>? _linkSub;
+  String? _pendingQrToken;
+  String? _pendingKeyName;
+  String? _pendingStatus;
+  String? _pendingNote;
 
   @override
   void initState() {
     super.initState();
     _loadSession();
+    _initDeepLinks();
+  }
+
+  @override
+  void dispose() {
+    _linkSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadSession() async {
@@ -37,6 +53,38 @@ class _FleetKeysAppState extends State<FleetKeysApp> {
     });
   }
 
+  Future<void> _initDeepLinks() async {
+    try {
+      final initialUri = await _appLinks.getInitialLink();
+      _handleIncomingUri(initialUri);
+    } catch (_) {}
+
+    _linkSub = _appLinks.uriLinkStream.listen(
+      _handleIncomingUri,
+      onError: (_) {},
+    );
+  }
+
+  void _handleIncomingUri(Uri? uri) {
+    if (uri == null) return;
+    if (uri.scheme != 'fleetkeys') return;
+
+    final token = uri.queryParameters['qr_token']?.trim();
+    if (token == null || token.isEmpty) return;
+    if (!mounted) return;
+
+    if (_pendingQrToken != null && _pendingQrToken == token) {
+      return;
+    }
+
+    setState(() {
+      _pendingQrToken = token;
+      _pendingKeyName = uri.queryParameters['key_name']?.trim();
+      _pendingStatus = uri.queryParameters['status']?.trim();
+      _pendingNote = uri.queryParameters['note']?.trim();
+    });
+  }
+
   Future<void> _handleLoginSuccess(LoginResult result) async {
     final session = AppSession(
       accessToken: result.accessToken,
@@ -45,6 +93,7 @@ class _FleetKeysAppState extends State<FleetKeysApp> {
       role: result.role,
       companyId: result.companyId,
       companyName: result.companyName,
+      userDisplayName: result.userDisplayName,
     );
 
     await _sessionService.saveSession(session);
@@ -80,42 +129,40 @@ class _FleetKeysAppState extends State<FleetKeysApp> {
       return LoginScreen(onLoginSuccess: _handleLoginSuccess);
     }
 
-    if (session.businessType == 'rent-a-car') {
-      return RentACarUserScreen(
-        companyName: session.companyName,
-        onLogout: _handleLogout,
-        loading: _loggingOut,
+    if (_pendingQrToken != null && _pendingQrToken!.isNotEmpty) {
+      return KeyScanActionScreen(
+        qrToken: _pendingQrToken!,
+        keyName: _pendingKeyName,
+        keyStatus: _pendingStatus,
+        keyNote: _pendingNote,
+        userDisplayName: session.userDisplayName,
+        accessToken: session.accessToken,
+        onCancel: () {
+          if (!mounted) return;
+          setState(() {
+            _pendingQrToken = null;
+            _pendingKeyName = null;
+            _pendingStatus = null;
+            _pendingNote = null;
+          });
+        },
+        onDone: () {
+          if (!mounted) return;
+          setState(() {
+            _pendingQrToken = null;
+            _pendingKeyName = null;
+            _pendingStatus = null;
+            _pendingNote = null;
+          });
+        },
       );
     }
 
-    if (session.businessType == 'hotel/motel') {
-      return HotelMotelUserScreen(
-        companyName: session.companyName,
-        onLogout: _handleLogout,
-        loading: _loggingOut,
-      );
-    }
-
-    return Scaffold(
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Unsupported business type for mobile app'),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: _loggingOut ? null : _handleLogout,
-                  child: Text(_loggingOut ? 'Logging out...' : 'Logout'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    return HomepageScreen(
+      companyName: session.companyName,
+      accessToken: session.accessToken,
+      onLogout: _handleLogout,
+      loading: _loggingOut,
     );
   }
 

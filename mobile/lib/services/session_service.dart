@@ -8,7 +8,8 @@ class AppSession {
     required this.role,
     required this.companyId,
     required this.companyName,
-  });
+    String? userDisplayName,
+  }) : _userDisplayName = userDisplayName;
 
   final String accessToken;
   final String refreshToken;
@@ -16,6 +17,12 @@ class AppSession {
   final String role;
   final String companyId;
   final String companyName;
+  final String? _userDisplayName;
+
+  String get userDisplayName {
+    final value = _userDisplayName?.trim() ?? '';
+    return value.isEmpty ? 'User' : value;
+  }
 }
 
 class SessionService {
@@ -25,6 +32,7 @@ class SessionService {
   static const _roleKey = 'fk_role';
   static const _companyIdKey = 'fk_company_id';
   static const _companyNameKey = 'fk_company_name';
+  static const _userDisplayNameKey = 'fk_user_display_name';
 
   Future<AppSession?> getSession() async {
     final prefs = await SharedPreferences.getInstance();
@@ -38,6 +46,7 @@ class SessionService {
       role: prefs.getString(_roleKey) ?? '',
       companyId: prefs.getString(_companyIdKey) ?? '',
       companyName: prefs.getString(_companyNameKey) ?? '',
+      userDisplayName: prefs.getString(_userDisplayNameKey),
     );
   }
 
@@ -49,6 +58,7 @@ class SessionService {
     await prefs.setString(_roleKey, session.role);
     await prefs.setString(_companyIdKey, session.companyId);
     await prefs.setString(_companyNameKey, session.companyName);
+    await prefs.setString(_userDisplayNameKey, session.userDisplayName);
   }
 
   Future<void> clearSession() async {
@@ -59,5 +69,6 @@ class SessionService {
     await prefs.remove(_roleKey);
     await prefs.remove(_companyIdKey);
     await prefs.remove(_companyNameKey);
+    await prefs.remove(_userDisplayNameKey);
   }
 }

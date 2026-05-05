@@ -1,21 +1,202 @@
-<section class="admin-page" aria-label="Rent a car admin page">
-  <img class="login-logo" src="assets/logo/logo.png" alt="FleetKeys logo" />
-  <h1>Rent-a-Car Admin</h1>
-  <p class="admin-meta">Business type: rent-a-car</p>
+<section class="admin-shell" aria-label="Rent a car admin page">
+  <aside class="admin-sidebar" id="admin-sidebar" aria-label="Admin navigation">
+    <img class="login-logo" src="assets/logo/logo.png" alt="FleetKeys logo" />
+    <nav class="admin-nav" aria-label="Sidebar menu">
+      <button type="button" class="admin-nav-link active" data-view-target="dashboard-view">Dashboard</button>
+      <button type="button" class="admin-nav-link" data-view-target="employees-view">Employees</button>
+      <button type="button" class="admin-nav-link" data-view-target="keys-view">Keys</button>
+      <button type="button" class="admin-nav-link" data-view-target="key-history-view">Key Status &amp; History</button>
+    </nav>
+    <div class="admin-sidebar-actions">
+      <a href="settings.html" class="admin-action-btn settings-btn">Settings</a>
+      <button id="logout-btn" type="button" class="sidebar-logout-btn">Logout</button>
+    </div>
+  </aside>
 
-  <form id="create-user-form" class="create-user-form" autocomplete="on">
-    <label for="new-full-name">Full name</label>
-    <input id="new-full-name" name="new-full-name" type="text" placeholder="Enter full name" />
+  <div class="admin-main">
+    <button
+      id="sidebar-toggle-btn"
+      class="sidebar-toggle-btn"
+      type="button"
+      aria-label="Toggle sidebar"
+      aria-expanded="true"
+      aria-controls="admin-sidebar"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
 
-    <label for="new-username">Username (email)</label>
-    <input id="new-username" name="new-username" type="email" placeholder="Enter user email" required />
+    <section class="admin-page admin-page-content">
+      <div id="dashboard-view" class="admin-view active" aria-label="Dashboard view">
+        <div class="dashboard-head">
+          <div>
+            <h1>Dashboard</h1>
+            <p class="admin-meta">Live snapshot of key usage, accountability, and return risk.</p>
+          </div>
+          <p class="dashboard-updated">Last sync: <span id="dash-last-updated">--:--</span></p>
+        </div>
 
-    <label for="new-password">Password</label>
-    <input id="new-password" name="new-password" type="password" placeholder="Enter password (min 8 chars)" required />
+        <div class="dashboard-kpis">
+          <article class="dashboard-kpi-card">
+            <p class="dashboard-kpi-label">Taken Now</p>
+            <h3 id="dash-kpi-taken">0</h3>
+            <p class="dashboard-kpi-meta">Keys currently checked out</p>
+          </article>
+          <article class="dashboard-kpi-card">
+            <p class="dashboard-kpi-label">Overdue</p>
+            <h3 id="dash-kpi-overdue">0</h3>
+            <p class="dashboard-kpi-meta">Past expected return time</p>
+          </article>
+          <article class="dashboard-kpi-card">
+            <p class="dashboard-kpi-label">Due in 60m</p>
+            <h3 id="dash-kpi-due-soon">0</h3>
+            <p class="dashboard-kpi-meta">Need follow-up soon</p>
+          </article>
+          <article class="dashboard-kpi-card">
+            <p class="dashboard-kpi-label">Available</p>
+            <h3 id="dash-kpi-available">0</h3>
+            <p class="dashboard-kpi-meta">Ready to be assigned</p>
+          </article>
+        </div>
 
-    <button id="create-user-btn" type="submit">Create User</button>
-    <p id="create-user-message" class="create-user-message" aria-live="polite"></p>
-  </form>
+        <div class="dashboard-grid">
+          <section class="dashboard-panel">
+            <h2>Currently Taken Keys</h2>
+            <table class="dashboard-keys-table" aria-label="Taken keys list">
+              <thead>
+                <tr>
+                  <th>Key Tag</th>
+                  <th>Key For</th>
+                  <th>Taken By</th>
+                  <th>Checkout</th>
+                  <th>Expected Return</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="dash-taken-rows"></tbody>
+            </table>
+          </section>
 
-  <button id="logout-btn" type="button">Logout</button>
+          <section class="dashboard-panel">
+            <h2>Recent Key Events</h2>
+            <ul id="dash-events-list" class="dashboard-events-list"></ul>
+          </section>
+        </div>
+      </div>
+
+      <div id="employees-view" class="admin-view" aria-label="Employees view" hidden>
+        <h1>Employees</h1>
+        <p class="admin-meta">Add and manage employees.</p>
+
+        <div class="employees-layout">
+          <div class="employees-panel">
+            <table class="employees-table" aria-label="Employees list">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Position</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="employees-table-body"></tbody>
+            </table>
+            <p id="employees-message" class="create-user-message" aria-live="polite"></p>
+          </div>
+
+          <div class="employees-side-actions">
+            <button id="open-create-employee-modal-btn" type="button" class="employee-create-main-btn">Create New</button>
+          </div>
+        </div>
+
+        <div id="create-employee-modal" class="employee-modal" hidden>
+          <div id="create-employee-modal-backdrop" class="employee-modal-backdrop"></div>
+          <div class="employee-modal-card" role="dialog" aria-modal="true" aria-label="Create employee">
+            <div class="employee-modal-head">
+              <h2>Create Employee</h2>
+              <button id="close-create-employee-modal-btn" type="button" class="employee-modal-close">×</button>
+            </div>
+
+            <form id="create-user-form" class="create-user-form" autocomplete="on">
+              <label for="new-full-name">Full name</label>
+              <input id="new-full-name" name="new-full-name" type="text" placeholder="Enter full name" required />
+
+              <label for="new-position">Position</label>
+              <input id="new-position" name="new-position" type="text" placeholder="Enter position in company" />
+
+              <label for="new-username">Username (email)</label>
+              <input id="new-username" name="new-username" type="email" placeholder="Enter user email" required />
+
+              <label for="new-password">Password</label>
+              <input id="new-password" name="new-password" type="password" placeholder="Enter password (min 8 chars)" required />
+
+              <button id="create-user-btn" type="submit">Create Employee</button>
+              <p id="create-user-message" class="create-user-message" aria-live="polite"></p>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div id="keys-view" class="admin-view" aria-label="Keys view" hidden>
+        <h1>Keys</h1>
+        <p class="admin-meta">Track key status and quick actions.</p>
+        <div class="keys-layout">
+          <div class="keys-panel">
+            <table class="keys-table" aria-label="Keys list">
+              <thead>
+                <tr>
+                  <th>Key Name</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="keys-table-body"></tbody>
+            </table>
+            <p id="keys-message" class="create-user-message" aria-live="polite"></p>
+          </div>
+
+          <div class="keys-side-actions">
+            <button id="open-create-key-modal-btn" type="button" class="key-create-main-btn">Create New Key</button>
+          </div>
+        </div>
+
+        <div id="create-key-modal" class="employee-modal" hidden>
+          <div id="create-key-modal-backdrop" class="employee-modal-backdrop"></div>
+          <div class="employee-modal-card" role="dialog" aria-modal="true" aria-label="Create key">
+            <div class="employee-modal-head">
+              <h2>Create New Key</h2>
+              <button id="close-create-key-modal-btn" type="button" class="employee-modal-close">×</button>
+            </div>
+
+            <form id="create-key-form" class="create-user-form" autocomplete="off">
+              <label for="new-key-code">Key name / code</label>
+              <input id="new-key-code" name="new-key-code" type="text" placeholder="e.g. Room 201 / RC-A17" required />
+
+              <label for="new-key-status">Status</label>
+              <select id="new-key-status" name="new-key-status">
+                <option value="available" selected>Available</option>
+                <option value="checked_out">Checked out</option>
+                <option value="maintenance">Maintenance</option>
+                <option value="lost">Lost</option>
+              </select>
+
+              <label for="new-key-note">Note</label>
+              <textarea id="new-key-note" name="new-key-note" rows="3" placeholder="Optional note"></textarea>
+
+              <div class="key-create-actions-inline">
+                <button id="generate-key-btn" type="button" class="key-generate-btn">Generate Key</button>
+                <button id="create-key-btn" type="submit">Create New Key</button>
+              </div>
+              <p id="create-key-message" class="create-user-message" aria-live="polite"></p>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div id="key-history-view" class="admin-view" aria-label="Key status and history view" hidden>
+        <h1>Key Status &amp; History</h1>
+        <p class="admin-meta">Status timeline and history logs will be added here.</p>
+      </div>
+    </section>
+  </div>
 </section>

@@ -10,6 +10,7 @@ class LoginResult {
     required this.role,
     required this.companyId,
     required this.companyName,
+    required this.userDisplayName,
   });
 
   final String accessToken;
@@ -18,6 +19,7 @@ class LoginResult {
   final String role;
   final String companyId;
   final String companyName;
+  final String userDisplayName;
 }
 
 class AuthService {
@@ -51,12 +53,16 @@ class AuthService {
     }
 
     final profile = payload['profile'] as Map<String, dynamic>?;
+    final user = payload['user'] as Map<String, dynamic>?;
     final accessToken = payload['access_token'] as String?;
     final refreshToken = payload['refresh_token'] as String?;
 
     if (profile == null || accessToken == null || accessToken.isEmpty) {
       throw Exception('Invalid login response payload');
     }
+
+    final email = (user?['email'] as String?)?.trim() ?? '';
+    final derivedName = email.contains('@') ? email.split('@').first : email;
 
     return LoginResult(
       accessToken: accessToken,
@@ -65,6 +71,7 @@ class AuthService {
       role: (profile['role'] as String?) ?? '',
       companyId: (profile['company_id'] as String?) ?? '',
       companyName: (profile['company_name'] as String?) ?? '',
+      userDisplayName: derivedName.isEmpty ? 'User' : derivedName,
     );
   }
 
