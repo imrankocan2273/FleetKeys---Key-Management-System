@@ -1,366 +1,241 @@
-FleetKeys — Key Management System
-A multi-tenant system for managing physical keys (rent-a-car and hotel/motel) with a backend API, a web admin panel, and a mobile app for QR-based scanning/actions.
-**DEPLOYED APP: https://monkfish-app-6gvye.ondigitalocean.app/
-BACKEND: https://coral-app-zk7m2.ondigitalocean.app**
-Username: imrankocan2273@gmail.com
-Password: testtest
+# 🔑 FleetKeys — Key Management System
 
-**FleetKeys 1.0.0**
+FleetKeys is a **multi-tenant key management system** designed to track and control physical keys for industries like rent-a-car agencies, hotels, and motels. It solves real-world operational challenges by ensuring strict data isolation between tenants, providing rich activity logs, and streamlining operations via a dedicated mobile app utilizing QR codes and deep links.
 
+---
 
-Status / Version
-Current stable version: 1.0.0 (Git tag: 1.0.0)
-Current milestone: Milestone 3
-Table of contents
-What is FleetKeys
-Key features
-Architecture & modules
-Tech stack
-Repository structure
-Running locally
-Backend (API)
-Web (admin)
-Mobile (Flutter)
-API overview
-Tests
-Database / Supabase
-Milestone 3 (delivered)
-Contributing
-License
-What is FleetKeys
-FleetKeys solves a common real-world problem: tracking and controlling physical keys (e.g. vehicle keys, room keys):
+## 🚀 Live Demo
 
-each tenant (company) has its own users and keys (data isolation),
-admin users manage keys and employees,
-mobile users scan a QR and perform actions (e.g. take/return a key),
-the web admin panel provides an overview and activity/history.
-Key features
-Multi-tenant + role-based security
-Tenant context is loaded from company_users (Supabase) and applied to protected routes.
-Role guard (admin / user) restricts sensitive operations.
-Key management
-Key CRUD (admin-only for create/update/delete).
-Statuses: available, checked_out, lost, maintenance.
-Per-key event history (taken / returned).
-QR + deep link flow
-Deep link format: fleetkeys://key-scan?...
-Scan endpoint: POST /api/keys/scan (calls Supabase RPC scan_key_event).
-Web admin panel
-Admin login.
-Dashboard (summary + recent activity).
-Employee management (CRUD).
-Keys management + QR display + history.
-Profile (name/position) and password change.
-Architecture & modules
-Backend: Node.js + Express API, Supabase for auth + database.
-Web: static HTML/CSS/JS admin panel (jQuery + SPApp router).
-Mobile: Flutter app (QR scanner + deep links + API client).
-E2E tests: Playwright (repo-level tests/).
-ER diagram (if up-to-date in the repo):
+You can explore and test the live application using the links below:
 
-ER Diagram
+* **Web Admin Panel:** [https://monkfish-app-6gvye.ondigitalocean.app/](https://monkfish-app-6gvye.ondigitalocean.app/)
+* **Backend API:** [https://coral-app-zk7m2.ondigitalocean.app](https://coral-app-zk7m2.ondigitalocean.app)
 
-Tech stack
-Backend: Node.js, Express, Supabase JS SDK
-Database/Auth: Supabase (Postgres + Auth + RPC)
-Web: HTML/CSS/JS, jQuery, SPApp
-Mobile: Flutter/Dart (e.g. mobile_scanner, app_links, http, shared_preferences)
-Tests: Playwright
-Repository structure
+### 🔐 Demo Credentials
+> **Username (Email):** `imrankocan2273@gmail.com`  
+> **Password:** `testtest`
 
-Plain Text
+---
 
+## 📌 Table of Contents
+- [Key Features](#-key-features)
+- [Architecture & Modules](#-architecture--modules)
+- [Tech Stack](#-tech-stack)
+- [Repository Structure](#-repository-structure)
+- [Running Locally](#-running-locally)
+  - [Backend (API)](#backend-api)
+  - [Web Admin Panel](#web-admin-panel)
+  - [Mobile App (Flutter)](#mobile-app-flutter)
+- [API Overview](#-api-overview)
+- [Tests](#-tests)
+- [Database & Supabase](#-database--supabase)
+- [Milestone 3 (Delivered)](#-milestone-3-delivered)
+- [Contributing](#-contributing)
+- [License](#-license)
+
+---
+
+## ✨ Key Features
+
+* **Multi-Tenant & Role-Based Security:** Complete data isolation. The tenant context is automatically resolved from the `company_users` table on protected routes. Role guards (`admin` / `user`) prevent unauthorized access to sensitive operations.
+* **Key Management (CRUD):** Administrators can fully manage the lifecycle of physical keys. Supported statuses include: `available`, `checked_out`, `lost`, and `maintenance`.
+* **Event History:** Comprehensive audit trail tracking exactly who checked a key out, when, and when it was returned.
+* **QR Code & Deep Link Flow:** Generates native deep links matching the format `fleetkeys://key-scan?...`. Scanning the QR code via the mobile application triggers a precise `scan_key_event` database RPC function.
+
+---
+
+## 🏗️ Architecture & Modules
+
+The ecosystem consists of three highly decoupled modules:
+1. **Backend:** Node.js + Express REST API processing core business logic and interacting with Supabase.
+2. **Web Admin:** A static single-page dashboard built with HTML/CSS/JS (jQuery + SPApp router) tailored for business managers.
+3. **Mobile App:** A Flutter application tailored for field employees to execute rapid QR code updates.
+
+### Database ER Diagram
+The system structure is modeled according to the schema shown in:
+`./ER-Diagram.png`
+
+---
+
+## 🛠️ Tech Stack
+
+| Module | Technologies Used |
+| :--- | :--- |
+| **Backend** | Node.js, Express, Supabase JS SDK |
+| **Database & Auth** | Supabase (PostgreSQL, Supabase Auth, RPC Functions) |
+| **Web Panel** | HTML5, CSS3, JavaScript, jQuery, SPApp router |
+| **Mobile App** | Flutter, Dart (`mobile_scanner`, `app_links`, `http`, `shared_preferences`) |
+| **Testing** | Playwright (End-to-End Testing) |
+
+---
+
+## 📂 Repository Structure
+
+```text
 .
-├── backend/               # Express API + Supabase integration
-├── web/                   # Web admin panel (static)
-├── mobile/                # Flutter app
-├── tests/                 # Playwright tests (E2E)
-├── ER-Diagram.png         # Database ER diagram
-└── README.md              # (this file)
-Running locally
+├── backend/          # Express API + Supabase integration
+├── web/              # Web admin panel (static files)
+├── mobile/           # Flutter mobile application
+├── tests/            # Playwright E2E tests
+├── ER-Diagram.png    # Database ER diagram visual asset
+└── README.md         # Repository documentation (this file)
+💻 Running Locally
 Backend (API)
-See: backend/README.md
+For granular configuration details, see backend/README.md.
 
-Install:
-
-Bash
-
-cd backend
-npm install
-Configure:
+Navigate to the backend folder and install the dependencies:
 
 Bash
-
-cp .env.example .env
-Fill in:
-
-SUPABASE_URL
-SUPABASE_ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY
-Start:
+   cd backend
+   npm install
+Create your local environment configuration file:
 
 Bash
+   cp .env.example .env
+Open .env and fill in your Supabase project parameters:
 
-npm run dev
-# or
-npm start
-Default: http://localhost:4000
-Health: GET /api/health
+Code snippet
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_ANON_KEY=your_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+Start the development engine:
 
-Web (admin)
-The web app is static (folder web/). Important: the backend base URL is currently hard-coded here:
+Bash
+   npm run dev   # Watch mode for development
+   # or
+   npm start     # Standard production execution
+Default Base URL: http://localhost:4000
 
-web/assets/js/custom.js:
+Health Check Endpoint: GET http://localhost:4000/api/health
 
+Web Admin Panel
+The web suite serves entirely static assets. The target API endpoint is declared globally within web/assets/js/custom.js.
+
+For local debugging, reconfigure backendBaseUrl to route traffic locally:
 
 JavaScript
-
-const backendBaseUrl = 'https://coral-app-zk7m2.ondigitalocean.app';
-For local development, change it to:
-
-
-JavaScript
-
-const backendBaseUrl = 'http://127.0.0.1:4000';
-Then serve the web/ folder (example):
-
+   // Switch target environment to your local server:
+   const backendBaseUrl = '[http://127.0.0.1:4000](http://127.0.0.1:4000)';
+Serve the static content from the root of the web/ folder:
 
 Bash
+   npx serve web
+Open the output interface URL generated by the compiler (typically http://localhost:3000).
 
-npx serve web
-and open the printed URL (e.g. http://localhost:3000).
-
-Mobile (Flutter)
-See: mobile/README.md
-
+Mobile App (Flutter)
+Navigate to the mobile directory and download the target packages:
 
 Bash
-
-cd mobile
-flutter pub get
-flutter run --dart-define=API_BASE_URL=http://127.0.0.1:4000
-API overview
-All routes except /api/auth/login and /api/auth/refresh require Authorization: Bearer <token>.
-Most routes also require tenant context (loaded on the backend from company_users).
-
-Auth
-POST /api/auth/login (body: username, password, client_type)
-POST /api/auth/refresh
-POST /api/auth/logout
-POST /api/auth/change-password
-PATCH /api/auth/profile
-Admin users (admin-only)
-GET /api/admin/users
-POST /api/admin/users
-PUT /api/admin/users/:companyUserId
-DELETE /api/admin/users/:companyUserId
-Keys (tenant-scoped)
-GET /api/keys
-GET /api/keys/dashboard
-GET /api/keys/:keyId
-POST /api/keys (admin)
-PATCH /api/keys/:keyId (admin)
-DELETE /api/keys/:keyId (admin)
-GET /api/keys/:keyId/events
-POST /api/keys/:keyId/events
-POST /api/keys/scan (QR flow)
-Tests
+   cd mobile
+   flutter pub get
+Run the build pipeline, specifying your preferred backend runtime environment context variable:
 
 Bash
+   flutter run --dart-define=API_BASE_URL=[http://127.0.0.1:4000](http://127.0.0.1:4000)
+🔌 API Overview & Detailed Payload Specs
+Every endpoint outside public authorization requires an Authorization: Bearer <token> header and evaluates traffic against the matching tenant context.
 
+🔐 Authentication & Profile Actions
+POST /api/auth/login - Signs in a client user.
+
+Body Payload:
+
+JSON
+    {
+      "username": "user@email.com",
+      "password": "secret",
+      "client_type": "web_admin"
+    }
+    ```
+* *Note: `client_type` values can be `web_admin` (only fields users with role admin) or `mobile_user` (only fields users with role user).*
+* `POST /api/auth/logout` - Revokes session identity.
+* **Body Payload:**
+```json
+    {
+      "access_token": "jwt-token"
+    }
+    ```
+* `POST /api/auth/change-password` - Updates security credential parameters.
+* **Body Payload:**
+```json
+    {
+      "current_password": "oldpassword123",
+      "new_password": "strongnewpassword456"
+    }
+    ```
+* `PATCH /api/auth/profile` - Modifies identification criteria (`full_name`, `position`).
+
+### 🛡️ Protected Middleware Diagnostics
+Routes nested under `/api/protected/*` enforce explicit token decoding verification paired with tenant checks.
+* `GET /api/protected/me` — Returns auth profile + assigned tenant context metadata.
+* `GET /api/protected/admin/me` — Restricted specifically to users carrying the `admin` role context block.
+* `GET /api/protected/user/me` — Restricted specifically to users carrying the `user` role context block.
+
+### 👥 Admin User Management (Admin Only)
+* `GET /api/admin/users` - Fetches all employees listed under the active tenant.
+* `POST /api/admin/users` - Provisions a new company user profile. Forces assignment to the exact same `company_id` partition as the creator admin. Rollback logic terminates Supabase Auth setup if DB logging breaks.
+* **Body Payload:**
+```json
+    {
+      "username": "new.user@email.com",
+      "password": "strongpassword",
+      "full_name": "New User",
+      "position": "Receptionist",
+      "phone": "+3876xxxxxxx"
+    }
+    ```
+* `PUT /api/admin/users/:companyUserId` - Modifies targeted employee data records.
+* `DELETE /api/admin/users/:companyUserId` - Drops an employee database assignment entry.
+
+### 🔑 Key Actions & Scans
+* `GET /api/keys` - Fetches keys bound to the active tenant company partition. Supports filtration: `?status=available|checked_out|lost|maintenance`.
+* `GET /api/keys/dashboard` - Obtains quick metric counts and aggregated history rows for dashboard renders.
+* `GET /api/keys/:keyId` - Retrieves comprehensive singular key properties.
+* `POST /api/keys` - Appends a brand new physical tracking key entity *(Admin Only)*.
+* **Body Payload:**
+```json
+    {
+      "key_code": "RC-A17",
+      "status": "available",
+      "note": "Optional note content"
+    }
+    ```
+* `PATCH /api/keys/:keyId` - Edits status, structural code strings, or metadata notes *(Admin Only)*.
+* `DELETE /api/keys/:keyId` - Permanently drops an index key record item from tracking loops *(Admin Only)*.
+* `GET /api/keys/:keyId/events` - Queries historical transaction action logs tied to a specific item.
+* `POST /api/keys/:keyId/events` - Electronically injects a manual action layer status update tracking block.
+* `POST /api/keys/scan` - Direct handling link route processing active incoming QR actions. Evaluates data payloads atomitically through custom SQL procedure configurations (`scan_key_event`).
+* **Body Payload:**
+```json
+    {
+      "qr_token": "fk_...",
+      "action": "taken",
+      "message": "Optional custom scan message payload tracking"
+    }
+    ```
+
+---
+
+## 🧪 Tests
+
+End-to-End automated testing layers are fully orchestrated using the **Playwright** framework tool suite.
+
+### Running Test Collections
+To initiate test execution cycles cleanly, run the following commands sequentially:
+```bash
 npm install
 npm test
-Note: the Playwright config expects tests/support/start-test-server.js. If that file is currently commented out, the test server will not start until the comment block is removed.
+⚠️ Configuration Server Trigger Warning: The engine expects to locate the target bootstrap sequence at tests/support/start-test-server.js. If the internal test server activation lines are commented out within your current implementation configuration layout, un-comment them to enable seamless runner startup routines.
 
-Database / Supabase
-FleetKeys uses Supabase for:
+🗄️ Database & Supabase
+FleetKeys coordinates application storage flows smoothly using Supabase tooling:
 
-Authentication (Supabase Auth)
-Postgres database (companies, company_users, keys, key_events, …)
-RPC functions (e.g. scan_key_event)
-Currently included SQL change:
+Supabase Auth: Controls persistent system access permissions.
 
-backend/docs/supabase/005_add_phone_to_company_users.sql
-Milestone 3 (delivered)
-Milestone 3 focuses on a usable end-to-end flow:
+PostgreSQL Schema Engine: Maintains relational layout matrices including companies, company_users, keys, and key_events.
 
-Web admin panel: dashboard + keys management + event history
-Employee management (CRUD) + phone field on company_users
-Profile and password change
-Keys API expanded: dashboard, events, scan
-Mobile groundwork for QR/deep link flow (configured dependencies + API base URL)
-Contributing
-PRs are welcome. Suggested flow:
+Database RPC Actions: Executes complex, transaction-locked check-in operations using custom procedures like scan_key_event.
 
-Create a feature branch
-Add tests where it makes sense
-Explain the change in the PR (what + why)
-License
-The repository currently does not include a LICENSE file. If you want, tell me which license you prefer (MIT / Apache-2.0 / ISC, etc.) and I can add it and align metadata in package.json.
+Raw migration components can be studied in depth under backend/docs/supabase/.
 
-
-FleetKeys Backend
-Backend service for FleetKeys (Express API + Supabase Auth/Postgres).
-
-Local setup
-Copy .env.example to .env
-Add Supabase values:
-SUPABASE_URL
-SUPABASE_ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY
-Install dependencies: npm install
-Run server:
-dev (watch): npm run dev
-prod: npm start
-Default port: 4000 (via the PORT env var).
-
-Supabase foundation
-In docs/supabase/ you can find SQL changes meant to be run in the Supabase SQL editor (or via a migrations pipeline).
-
-Currently included:
-
-005_add_phone_to_company_users.sql
-Note: the backend expects tables such as company_users, keys, key_events, and the RPC function scan_key_event to exist. If your initial schema/migrations are missing, they should be added to the repo or documented.
-
-API
-POST /api/auth/login
-Body:
-
-
-JSON
-
-{
-  "username": "user@email.com",
-  "password": "secret",
-  "client_type": "web_admin"
-}
-client_type values:
-
-web_admin -> only users with role admin
-mobile_user -> only users with role user
-POST /api/auth/logout
-Body:
-
-
-JSON
-
-{
-  "access_token": "jwt-token"
-}
-Auth profile / password
-PATCH /api/auth/profile (Bearer + tenant context) — update full_name / position
-POST /api/auth/change-password (Bearer) — body: current_password, new_password
-Protected routes and middleware
-Routes under /api/protected/* require Bearer token + tenant context.
-
-GET /api/protected/me
-Returns auth user + tenant context.
-
-GET /api/protected/admin/me
-Requires role admin.
-
-GET /api/protected/user/me
-Requires role user.
-
-Admin user management (DAO/Service/Controller/Route)
-POST /api/admin/users
-Requires:
-
-Bearer token of admin user
-admin role in tenant context
-Body:
-
-
-JSON
-
-{
-  "username": "new.user@email.com",
-  "password": "strongpassword",
-  "full_name": "New User",
-  "position": "Receptionist",
-  "phone": "+3876xxxxxxx"
-}
-Behavior:
-
-Creates Supabase auth user with service_role
-Inserts user into company_users with role user
-Enforces same company_id as current admin
-Rolls back auth user if DB insert fails
-Keys management
-GET /api/keys
-List keys for tenant company. Supports optional ?status=available|checked_out|lost|maintenance.
-
-GET /api/keys/dashboard
-Dashboard summary + recent events (tenant scope).
-
-GET /api/keys/:keyId
-Get key by id in tenant company.
-
-POST /api/keys (admin)
-Create new key.
-
-Body:
-
-
-JSON
-
-{
-  "key_code": "RC-A17",
-  "status": "available",
-  "note": "Optional note"
-}
-PATCH /api/keys/:keyId (admin)
-Update key fields (key_code, status, note).
-
-DELETE /api/keys/:keyId (admin)
-Delete key.
-
-GET /api/keys/:keyId/events
-List taken/returned events for a key.
-
-POST /api/keys/:keyId/events
-Insert taken/returned event and update key status accordingly.
-
-POST /api/keys/scan
-QR scan flow endpoint (calls SQL function scan_key_event).
-
-Body:
-
-
-JSON
-
-{
-  "qr_token": "fk_...",
-  "action": "taken",
-  "message": "Optional scan message"
-}
-
-FleetKeys Mobile (Flutter)
-Mobile client for the FleetKeys system. The app is primarily intended for the “user” role (employees) and focuses on the QR/deep-link flow (scanner + actions on keys).
-
-Prerequisites
-Flutter SDK (see pubspec.yaml, currently: Dart ^3.9.2)
-A running FleetKeys backend (local or deployed)
-Configure API base URL
-Set the API base URL via --dart-define:
-
-
-Bash
-
-1
-flutter run --dart-define=API_BASE_URL=http://127.0.0.1:4000
-Code: lib/config/api_config.dart.
-
-Run
-
-Bash
-
-1
-2
-flutter pub get
-flutter run --dart-define=API_BASE_URL=http://127.0.0.1:4000
-Features (high-level)
-Login and session persistence (tokens)
-QR scanning (e.g. deep link fleetkeys://key-scan?...)
-Calling backend endpoints for scan/event flow
-Note: the web admin panel generates deep links and a QR code for a key; the mobile app opens them and triggers the appropriate flow.
+Latest migration tracking element: 005_add_phone_to_company_users.sql (appends explicit telephone logging structures to tracking records).
