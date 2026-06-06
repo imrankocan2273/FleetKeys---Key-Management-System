@@ -1,9 +1,7 @@
 $(document).ready(function() {
   $("main#spapp > section").height($(document).height() - 60);
 
-  // TODO(Deploy): Zamijeni backendBaseUrl kada deployamo backend na DigitalOcean.
-  // Primjer: https://<tvoj-do-domen>/ (ili IP + port, ako bude tako)
-  const backendBaseUrl = 'http://localhost:4000';
+  const backendBaseUrl = 'https://coral-app-zk7m2.ondigitalocean.app';
   const sessionKey = 'fk_web_session';
 
   function getSession() {
