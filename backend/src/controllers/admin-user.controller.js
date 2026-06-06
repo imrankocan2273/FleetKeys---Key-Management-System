@@ -11,6 +11,7 @@ async function createUser(req, res) {
     password,
     full_name: fullName,
     position,
+    phone,
   } = req.body || {};
   const companyId = req.context?.company_id;
 
@@ -36,6 +37,7 @@ async function createUser(req, res) {
     password: String(password),
     fullName: fullName ? String(fullName).trim() : null,
     position: position ? String(position).trim() : null,
+    phone: phone ? String(phone).trim() : null,
   });
 
   if (!result.ok) {
@@ -71,6 +73,7 @@ async function updateUser(req, res) {
   const {
     full_name: fullName,
     position,
+    phone,
   } = req.body || {};
 
   if (!companyId) {
@@ -87,6 +90,7 @@ async function updateUser(req, res) {
     companyUserId,
     fullName: fullName ? String(fullName).trim() : null,
     position: position ? String(position).trim() : null,
+    phone: phone ? String(phone).trim() : null,
   });
 
   if (!result.ok) {

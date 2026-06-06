@@ -2,18 +2,37 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../config/api_config.dart';
+import 'authenticated_api_client.dart';
+
+class KeyActor {
+  const KeyActor({
+    required this.name,
+    this.position,
+    this.phone,
+  });
+
+  final String name;
+  final String? position;
+  final String? phone;
+}
+
 class UserKeyItem {
   const UserKeyItem({
     required this.id,
     required this.keyCode,
     required this.status,
     this.checkedOutBy,
+    this.checkedOutByPosition,
+    this.checkedOutByPhone,
   });
 
   final String id;
   final String keyCode;
   final String status;
   final String? checkedOutBy;
+  final String? checkedOutByPosition;
+  final String? checkedOutByPhone;
 
   bool get isAvailable => status == 'available';
 }
@@ -31,23 +50,23 @@ class ScannedKeyPreview {
 }
 
 class KeysService {
-  KeysService({http.Client? client}) : _client = client ?? http.Client();
+  KeysService({http.Client? client, AuthenticatedApiClient? apiClient})
+    : _client = client ?? http.Client(),
+      _apiClient = apiClient;
 
   final http.Client _client;
+  final AuthenticatedApiClient? _apiClient;
 
-  static const String _baseUrl = 'http://127.0.0.1:4000';
+  static String get _baseUrl => ApiConfig.normalizeBaseUrl(ApiConfig.baseUrl);
 
   Future<ScannedKeyPreview?> fetchKeyPreviewByQrToken({
     required String accessToken,
     required String qrToken,
   }) async {
     final keysUri = Uri.parse('$_baseUrl/api/keys');
-    final response = await _client.get(
+    final response = await _get(
       keysUri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $accessToken',
-      },
+      accessToken: accessToken,
     ).timeout(const Duration(seconds: 5));
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
@@ -84,12 +103,9 @@ class KeysService {
   }) async {
     final uri = Uri.parse('$_baseUrl/api/keys/scan');
 
-    final response = await _client.post(
+    final response = await _post(
       uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $accessToken',
-      },
+      accessToken: accessToken,
       body: jsonEncode({
         'qr_token': qrToken,
         'action': action,
@@ -101,20 +117,18 @@ class KeysService {
         jsonDecode(response.body) as Map<String, dynamic>;
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(payload['message'] ?? payload['details'] ?? 'Scan key event failed');
+      throw Exception(
+        payload['message'] ?? payload['details'] ?? 'Scan key event failed',
+      );
     }
   }
 
-  Future<List<UserKeyItem>> fetchKeysForUser({required String accessToken}) async {
+  Future<List<UserKeyItem>> fetchKeysForUser({
+    required String accessToken,
+  }) async {
     final keysUri = Uri.parse('$_baseUrl/api/keys');
 
-    final keysResponse = await _client.get(
-      keysUri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $accessToken',
-      },
-    );
+    final keysResponse = await _get(keysUri, accessToken: accessToken);
 
     final Map<String, dynamic> payload =
         jsonDecode(keysResponse.body) as Map<String, dynamic>;
@@ -140,15 +154,15 @@ class KeysService {
         .where((row) => row.status == 'checked_out')
         .toList();
 
-    final checkedOutByByKeyId = <String, String>{};
+    final checkedOutByByKeyId = <String, KeyActor>{};
 
     await Future.wait(
       checkedOutKeys.map((row) async {
-        final actor = await _fetchLastActorForKey(
+        final actor = await _fetchLastTakenActorForKey(
           accessToken: accessToken,
           keyId: row.id,
         );
-        if (actor != null && actor.isNotEmpty) {
+        if (actor != null && actor.name.trim().isNotEmpty) {
           checkedOutByByKeyId[row.id] = actor;
         }
       }),
@@ -156,29 +170,28 @@ class KeysService {
 
     return parsedKeys
         .map(
-          (row) => UserKeyItem(
-            id: row.id,
-            keyCode: row.keyCode,
-            status: row.status,
-            checkedOutBy: checkedOutByByKeyId[row.id],
-          ),
+          (row) {
+            final actor = checkedOutByByKeyId[row.id];
+            return UserKeyItem(
+              id: row.id,
+              keyCode: row.keyCode,
+              status: row.status,
+              checkedOutBy: actor?.name,
+              checkedOutByPosition: actor?.position,
+              checkedOutByPhone: actor?.phone,
+            );
+          },
         )
         .toList();
   }
 
-  Future<String?> _fetchLastActorForKey({
+  Future<KeyActor?> _fetchLastTakenActorForKey({
     required String accessToken,
     required String keyId,
   }) async {
     final eventsUri = Uri.parse('$_baseUrl/api/keys/$keyId/events?limit=10');
 
-    final response = await _client.get(
-      eventsUri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $accessToken',
-      },
-    );
+    final response = await _get(eventsUri, accessToken: accessToken);
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       return null;
@@ -196,14 +209,48 @@ class KeysService {
       if (action != 'taken') continue;
 
       final actorName = (event['actor_name'] as String?)?.trim();
-      if (actorName != null && actorName.isNotEmpty) {
-        return actorName;
-      }
+      final actorPosition = (event['actor_position'] as String?)?.trim();
+      final actorPhone = (event['actor_phone'] as String?)?.trim();
 
-      return 'Unknown';
+      return KeyActor(
+        name: (actorName != null && actorName.isNotEmpty) ? actorName : 'Unknown',
+        position: (actorPosition != null && actorPosition.isNotEmpty) ? actorPosition : null,
+        phone: (actorPhone != null && actorPhone.isNotEmpty) ? actorPhone : null,
+      );
     }
 
-    return 'Unknown';
+    return null;
+  }
+
+  Future<http.Response> _get(Uri uri, {required String accessToken}) {
+    final apiClient = _apiClient;
+    if (apiClient != null) return apiClient.get(uri);
+
+    return _client.get(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
+    );
+  }
+
+  Future<http.Response> _post(
+    Uri uri, {
+    required String accessToken,
+    Object? body,
+  }) {
+    final apiClient = _apiClient;
+    if (apiClient != null) return apiClient.post(uri, body: body);
+
+    return _client.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
+      body: body,
+    );
   }
 }
 

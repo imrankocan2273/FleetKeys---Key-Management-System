@@ -22,7 +22,7 @@ async function deleteAuthUser({ authUserId }) {
   return { ok: true };
 }
 
-async function insertCompanyUser({ companyId, authUserId, fullName, position }) {
+async function insertCompanyUser({ companyId, authUserId, fullName, position, phone }) {
   const { data, error } = await supabase
     .from('company_users')
     .insert({
@@ -31,8 +31,9 @@ async function insertCompanyUser({ companyId, authUserId, fullName, position }) 
       role: 'user',
       full_name: fullName || null,
       position: position || null,
+      phone: phone || null,
     })
-    .select('id, company_id, auth_user_id, role, full_name, position')
+    .select('id, company_id, auth_user_id, role, full_name, position, phone')
     .single();
 
   if (error) {
@@ -45,7 +46,7 @@ async function insertCompanyUser({ companyId, authUserId, fullName, position }) 
 async function selectCompanyUsers({ companyId }) {
   const { data, error } = await supabase
     .from('company_users')
-    .select('id, company_id, auth_user_id, role, full_name, position')
+    .select('id, company_id, auth_user_id, role, full_name, position, phone')
     .eq('company_id', companyId)
     .order('id', { ascending: true });
 
@@ -60,6 +61,7 @@ async function selectCompanyUsers({ companyId }) {
     role: row.role,
     full_name: row.full_name,
     position: row.position,
+    phone: row.phone,
     email: null,
   }));
 
@@ -69,7 +71,7 @@ async function selectCompanyUsers({ companyId }) {
 async function findCompanyUserById({ companyId, companyUserId }) {
   const { data, error } = await supabase
     .from('company_users')
-    .select('id, company_id, auth_user_id, role, full_name, position')
+    .select('id, company_id, auth_user_id, role, full_name, position, phone')
     .eq('company_id', companyId)
     .eq('id', companyUserId)
     .maybeSingle();
@@ -81,16 +83,17 @@ async function findCompanyUserById({ companyId, companyUserId }) {
   return { ok: true, row: data || null };
 }
 
-async function updateCompanyUserProfile({ companyId, companyUserId, fullName, position }) {
+async function updateCompanyUserProfile({ companyId, companyUserId, fullName, position, phone }) {
   const { data, error } = await supabase
     .from('company_users')
     .update({
       full_name: fullName || null,
       position: position || null,
+      phone: phone || null,
     })
     .eq('company_id', companyId)
     .eq('id', companyUserId)
-    .select('id, company_id, auth_user_id, role, full_name, position')
+    .select('id, company_id, auth_user_id, role, full_name, position, phone')
     .single();
 
   if (error) {

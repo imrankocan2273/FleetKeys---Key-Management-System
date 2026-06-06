@@ -1,0 +1,126 @@
+<section class="admin-shell settings-shell" aria-label="Settings page">
+  <aside class="admin-sidebar" id="admin-sidebar" aria-label="Settings navigation">
+    <img class="login-logo" src="assets/logo/logo.png" alt="FleetKeys logo" />
+    <nav class="admin-nav" aria-label="Sidebar menu">
+      <button type="button" class="admin-nav-link active" data-settings-target="profile-panel">Profile</button>
+      <button type="button" class="admin-nav-link" data-settings-target="security-panel">Security</button>
+    </nav>
+    <div class="admin-sidebar-actions">
+      <a href="#homepage" class="admin-action-btn settings-btn">Back to dashboard</a>
+      <button id="settings-logout-btn" type="button" class="sidebar-logout-btn">Logout</button>
+    </div>
+  </aside>
+
+  <div class="admin-main">
+    <button
+      id="sidebar-toggle-btn"
+      class="sidebar-toggle-btn"
+      type="button"
+      aria-label="Toggle sidebar"
+      aria-expanded="true"
+      aria-controls="admin-sidebar"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <section class="admin-page admin-page-content settings-page-content">
+      <div class="settings-hero">
+        <div>
+          <p class="admin-meta">Account settings</p>
+          <h1>Settings</h1>
+          <p class="settings-description">Update your identity, tighten your account security, and keep the workspace feeling intentional instead of dead-end.</p>
+        </div>
+        <div class="settings-hero-chip">
+          <span class="settings-hero-chip-label">Connected company</span>
+          <strong id="settings-company-chip">-</strong>
+        </div>
+      </div>
+
+      <div class="settings-grid">
+        <article id="profile-panel" class="settings-card active" aria-label="Profile panel">
+          <div class="settings-card-head">
+            <h2>Profile</h2>
+            <p>What the team sees when you work in the system.</p>
+          </div>
+
+          <form id="profile-form" class="create-user-form settings-form" autocomplete="off">
+            <label for="profile-full-name">Full name</label>
+            <input id="profile-full-name" name="profile-full-name" type="text" placeholder="Your full name" />
+
+            <label for="profile-position">Position</label>
+            <input id="profile-position" name="profile-position" type="text" placeholder="Your role in the company" />
+
+            <button id="save-profile-btn" type="submit">Save profile</button>
+            <p id="profile-message" class="create-user-message" aria-live="polite"></p>
+          </form>
+
+          <dl class="settings-profile-list settings-profile-summary">
+            <div>
+              <dt>Email</dt>
+              <dd id="settings-user-email">-</dd>
+            </div>
+            <div>
+              <dt>Role</dt>
+              <dd id="settings-user-role">-</dd>
+            </div>
+            <div>
+              <dt>Company</dt>
+              <dd id="settings-company-name">-</dd>
+            </div>
+            <div>
+              <dt>Business type</dt>
+              <dd id="settings-business-type">-</dd>
+            </div>
+          </dl>
+        </article>
+
+        <article id="security-panel" class="settings-card" aria-label="Security panel">
+          <div class="settings-card-head">
+            <h2>Security</h2>
+            <p>Keep access clean and obvious.</p>
+          </div>
+
+          <div class="security-quick-grid">
+            <div class="security-quick-card security-quick-card-ok">
+              <span>Session</span>
+              <strong id="settings-session-status">Active</strong>
+            </div>
+            <div class="security-quick-card">
+              <span>2FA</span>
+              <strong>Not enabled</strong>
+            </div>
+            <div class="security-quick-card">
+              <span>Password age</span>
+              <strong>Change often</strong>
+            </div>
+          </div>
+
+          <form id="change-password-form" class="create-user-form settings-form" autocomplete="off">
+            <label for="current-password">Current password</label>
+            <input id="current-password" name="current-password" type="password" required />
+
+            <label for="new-password-settings">New password</label>
+            <input id="new-password-settings" name="new-password-settings" type="password" minlength="8" required />
+
+            <label for="confirm-password">Confirm new password</label>
+            <input id="confirm-password" name="confirm-password" type="password" minlength="8" required />
+
+            <button id="change-password-btn" type="submit">Update password</button>
+            <p id="change-password-message" class="create-user-message" aria-live="polite"></p>
+          </form>
+
+          <div class="security-notes">
+            <h3>Security checklist</h3>
+            <ul>
+              <li>Use a unique password for each admin account.</li>
+              <li>Keep the dashboard tabs clean, especially on shared devices.</li>
+              <li>Log out when you finish using a public machine.</li>
+            </ul>
+          </div>
+        </article>
+      </div>
+    </section>
+  </div>
+</section>

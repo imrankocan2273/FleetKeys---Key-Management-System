@@ -34,7 +34,7 @@ async function loginWithPassword({ email, password }) {
 async function loadUserCompanyContext({ authUserId }) {
   const { data, error } = await supabaseAdmin
     .from('company_users')
-    .select('role, company_id')
+    .select('role, company_id, full_name, position, phone')
     .eq('auth_user_id', authUserId)
     .limit(1)
     .maybeSingle();
@@ -78,6 +78,9 @@ async function loadUserCompanyContext({ authUserId }) {
     context: {
       role: data.role,
       company_id: data.company_id,
+      full_name: data.full_name || null,
+      position: data.position || null,
+      phone: data.phone || null,
       company_name: company?.name || null,
       business_type: normalizedBusinessType,
     },
@@ -106,8 +109,93 @@ async function logoutWithAccessToken({ accessToken }) {
   return { ok: true };
 }
 
+async function changePassword({ accessToken, email, currentPassword, newPassword }) {
+  const verification = await supabase.auth.signInWithPassword({
+    email,
+    password: currentPassword,
+  });
+
+  if (verification.error) {
+    return { ok: false, error: verification.error.message };
+  }
+
+  const scopedClient = createClient(env.supabaseUrl, env.supabaseAnonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+    global: {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  });
+
+  const { data, error } = await scopedClient.auth.updateUser({
+    password: newPassword,
+  });
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  return {
+    ok: true,
+    user: data?.user || verification.data?.user || null,
+  };
+}
+
+async function updateUserProfile({ companyId, authUserId, fullName, position }) {
+  const patch = {};
+
+  if (fullName !== undefined) {
+    patch.full_name = fullName ? String(fullName).trim() : null;
+  }
+
+  if (position !== undefined) {
+    patch.position = position ? String(position).trim() : null;
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('company_users')
+    .update(patch)
+    .eq('company_id', companyId)
+    .eq('auth_user_id', authUserId)
+    .select('id, company_id, auth_user_id, role, full_name, position, phone')
+    .maybeSingle();
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  if (!data) {
+    return { ok: false, error: 'No company_users row found for this user' };
+  }
+
+  return { ok: true, user: data };
+}
+
+async function refreshSession({ refreshToken }) {
+  const { data, error } = await supabase.auth.refreshSession({
+    refresh_token: refreshToken,
+  });
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  return {
+    ok: true,
+    session: data.session,
+    user: data.user,
+  };
+}
+
 module.exports = {
   loginWithPassword,
+  refreshSession,
   loadUserCompanyContext,
   logoutWithAccessToken,
+  changePassword,
+  updateUserProfile,
 };

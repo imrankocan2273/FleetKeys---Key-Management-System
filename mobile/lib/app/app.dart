@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../screens/homepage_screen.dart';
 import '../screens/key_scan_action_screen.dart';
 import '../screens/login_screen.dart';
+import '../services/authenticated_api_client.dart';
 import '../services/auth_service.dart';
 import '../services/session_service.dart';
 
@@ -20,6 +21,7 @@ class _FleetKeysAppState extends State<FleetKeysApp> {
   final _sessionService = SessionService();
   final _authService = AuthService();
   final _appLinks = AppLinks();
+  late final AuthenticatedApiClient _apiClient;
 
   AppSession? _session;
   bool _bootstrapping = true;
@@ -33,6 +35,11 @@ class _FleetKeysAppState extends State<FleetKeysApp> {
   @override
   void initState() {
     super.initState();
+    _apiClient = AuthenticatedApiClient(
+      sessionService: _sessionService,
+      authService: _authService,
+      onSessionChanged: _handleSessionChanged,
+    );
     _loadSession();
     _initDeepLinks();
   }
@@ -104,6 +111,19 @@ class _FleetKeysAppState extends State<FleetKeysApp> {
     });
   }
 
+  void _handleSessionChanged(AppSession? session) {
+    if (!mounted) return;
+    setState(() {
+      _session = session;
+      if (session == null) {
+        _pendingQrToken = null;
+        _pendingKeyName = null;
+        _pendingStatus = null;
+        _pendingNote = null;
+      }
+    });
+  }
+
   Future<void> _handleLogout() async {
     if (_session == null || _loggingOut) return;
 
@@ -137,6 +157,7 @@ class _FleetKeysAppState extends State<FleetKeysApp> {
         keyNote: _pendingNote,
         userDisplayName: session.userDisplayName,
         accessToken: session.accessToken,
+        apiClient: _apiClient,
         onCancel: () {
           if (!mounted) return;
           setState(() {
@@ -161,6 +182,16 @@ class _FleetKeysAppState extends State<FleetKeysApp> {
     return HomepageScreen(
       companyName: session.companyName,
       accessToken: session.accessToken,
+      apiClient: _apiClient,
+      onQrScanned: (qrToken) {
+        if (!mounted) return;
+        setState(() {
+          _pendingQrToken = qrToken;
+          _pendingKeyName = null;
+          _pendingStatus = null;
+          _pendingNote = null;
+        });
+      },
       onLogout: _handleLogout,
       loading: _loggingOut,
     );
@@ -181,8 +212,8 @@ class _FleetKeysAppState extends State<FleetKeysApp> {
       home: _bootstrapping
           ? const Scaffold(body: Center(child: CircularProgressIndicator()))
           : (_session == null || _session!.accessToken.isEmpty)
-              ? LoginScreen(onLoginSuccess: _handleLoginSuccess)
-              : _buildUserHome(),
+          ? LoginScreen(onLoginSuccess: _handleLoginSuccess)
+          : _buildUserHome(),
     );
   }
 }

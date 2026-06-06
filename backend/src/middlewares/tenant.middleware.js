@@ -18,6 +18,8 @@ async function requireTenantContext(req, res, next) {
     user_id: authUserId,
     role: contextResult.context.role,
     company_id: contextResult.context.company_id,
+    full_name: contextResult.context.full_name,
+    position: contextResult.context.position,
     company_name: contextResult.context.company_name,
     business_type: contextResult.context.business_type,
   };

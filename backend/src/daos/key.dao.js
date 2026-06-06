@@ -142,9 +142,24 @@ async function selectCompanyUsersByAuthUserIds({ companyId, authUserIds }) {
 
   const { data, error } = await supabaseAdmin
     .from('company_users')
-    .select('id, auth_user_id, full_name, position')
+    .select('id, auth_user_id, full_name, position, phone')
     .eq('company_id', companyId)
     .in('auth_user_id', safeAuthUserIds);
+
+  if (error) return { ok: false, error: error.message };
+
+  return { ok: true, rows: data || [] };
+}
+
+async function selectRecentKeyEvents({ companyId, limit }) {
+  const safeLimit = Number.isInteger(limit) && limit > 0 ? Math.min(limit, 200) : 50;
+
+  const { data, error } = await supabaseAdmin
+    .from('key_events')
+    .select('id, key_id, company_id, user_id, action, message, created_at')
+    .eq('company_id', companyId)
+    .order('created_at', { ascending: false })
+    .limit(safeLimit);
 
   if (error) return { ok: false, error: error.message };
 
@@ -192,6 +207,7 @@ module.exports = {
   selectCompanyUserIdByAuthUserId,
   selectKeyEventsByKeyId,
   selectCompanyUsersByAuthUserIds,
+  selectRecentKeyEvents,
   insertKeyEvent,
   executeScanKeyEvent,
 };

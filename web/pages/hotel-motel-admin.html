@@ -8,7 +8,7 @@
       <button type="button" class="admin-nav-link" data-view-target="key-history-view">Key Status &amp; History</button>
     </nav>
     <div class="admin-sidebar-actions">
-      <a href="settings.html" class="admin-action-btn settings-btn">Settings</a>
+      <a href="#settings" class="admin-action-btn settings-btn">Settings</a>
       <button id="logout-btn" type="button" class="sidebar-logout-btn">Logout</button>
     </div>
   </aside>
@@ -32,7 +32,7 @@
         <div class="dashboard-head">
           <div>
             <h1>Dashboard</h1>
-            <p class="admin-meta">Live snapshot of key usage, accountability, and return risk.</p>
+            <p class="admin-meta">Live snapshot of key usage and accountability.</p>
           </div>
           <p class="dashboard-updated">Last sync: <span id="dash-last-updated">--:--</span></p>
         </div>
@@ -44,14 +44,14 @@
             <p class="dashboard-kpi-meta">Keys currently checked out</p>
           </article>
           <article class="dashboard-kpi-card">
-            <p class="dashboard-kpi-label">Overdue</p>
+            <p class="dashboard-kpi-label">Maintenance</p>
             <h3 id="dash-kpi-overdue">0</h3>
-            <p class="dashboard-kpi-meta">Past expected return time</p>
+            <p class="dashboard-kpi-meta">Temporarily unavailable</p>
           </article>
           <article class="dashboard-kpi-card">
-            <p class="dashboard-kpi-label">Due in 60m</p>
+            <p class="dashboard-kpi-label">Lost</p>
             <h3 id="dash-kpi-due-soon">0</h3>
-            <p class="dashboard-kpi-meta">Need follow-up soon</p>
+            <p class="dashboard-kpi-meta">Marked as missing</p>
           </article>
           <article class="dashboard-kpi-card">
             <p class="dashboard-kpi-label">Available</p>
@@ -70,7 +70,7 @@
                   <th>Key For</th>
                   <th>Taken By</th>
                   <th>Checkout</th>
-                  <th>Expected Return</th>
+                  <th>Updated</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -96,6 +96,7 @@
                 <tr>
                   <th>Name</th>
                   <th>Position</th>
+                  <th>Phone</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -123,6 +124,9 @@
 
               <label for="new-position">Position</label>
               <input id="new-position" name="new-position" type="text" placeholder="Enter position in company" />
+
+              <label for="new-phone">Phone</label>
+              <input id="new-phone" name="new-phone" type="tel" placeholder="Enter phone number" />
 
               <label for="new-username">Username (email)</label>
               <input id="new-username" name="new-username" type="email" placeholder="Enter user email" required />
@@ -195,7 +199,24 @@
 
       <div id="key-history-view" class="admin-view" aria-label="Key status and history view" hidden>
         <h1>Key Status &amp; History</h1>
-        <p class="admin-meta">Status timeline and history logs will be added here.</p>
+        <p class="admin-meta">Review key activity by key and action.</p>
+        <div class="history-toolbar">
+          <label>
+            <span>Key</span>
+            <select id="history-key-select"></select>
+          </label>
+          <label>
+            <span>Action</span>
+            <select id="history-action-filter">
+              <option value="all">All actions</option>
+              <option value="taken">Taken</option>
+              <option value="returned">Returned</option>
+            </select>
+          </label>
+          <button id="history-refresh-btn" type="button" class="history-refresh-btn">Refresh</button>
+        </div>
+        <p id="history-message" class="create-user-message" aria-live="polite"></p>
+        <ol id="history-timeline" class="history-timeline" aria-label="Key history timeline"></ol>
       </div>
     </section>
   </div>
