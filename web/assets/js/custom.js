@@ -1,6 +1,8 @@
 $(document).ready(function() {
   $("main#spapp > section").height($(document).height() - 60);
 
+  // TODO(Deploy): Zamijeni backendBaseUrl kada deployamo backend na DigitalOcean.
+  // Primjer: https://<tvoj-do-domen>/ (ili IP + port, ako bude tako)
   const backendBaseUrl = 'http://localhost:4000';
   const sessionKey = 'fk_web_session';
 
@@ -59,6 +61,55 @@ $(document).ready(function() {
     }
   }
 
+  function attachSettingsNavigation(rootEl) {
+    const buttons = rootEl?.querySelectorAll('.admin-nav-link[data-settings-target]');
+    const panels = rootEl?.querySelectorAll('.settings-card');
+    if (!buttons.length || !panels.length) return;
+
+    const activatePanel = function(targetId) {
+      panels.forEach(function(panelEl) {
+        panelEl.classList.toggle('active', panelEl.id === targetId);
+      });
+
+      buttons.forEach(function(buttonEl) {
+        buttonEl.classList.toggle('active', buttonEl.getAttribute('data-settings-target') === targetId);
+      });
+    };
+
+    buttons.forEach(function(buttonEl) {
+      buttonEl.addEventListener('click', function() {
+        const targetId = buttonEl.getAttribute('data-settings-target');
+        if (targetId) activatePanel(targetId);
+      });
+    });
+
+    activatePanel('profile-panel');
+  }
+
+  function hydrateSettingsProfile(rootEl, session) {
+    const profile = session?.profile || {};
+    const user = session?.user || {};
+
+    const setText = function(selector, value) {
+      const element = rootEl?.querySelector(selector);
+      if (element) element.textContent = value || '-';
+    };
+
+    const setValue = function(selector, value) {
+      const element = rootEl?.querySelector(selector);
+      if (element && 'value' in element) element.value = value || '';
+    };
+
+    setText('#settings-company-chip', profile.company_name || '-');
+    setText('#settings-user-email', user.email || '-');
+    setText('#settings-user-role', profile.role || '-');
+    setText('#settings-company-name', profile.company_name || '-');
+    setText('#settings-business-type', profile.business_type || '-');
+    setText('#settings-session-status', session?.access_token ? 'Active' : 'Signed out');
+    setValue('#profile-full-name', session?.profile?.full_name || '');
+    setValue('#profile-position', session?.profile?.position || '');
+  }
+
   function attachSidebarToggle(rootEl) {
     const shell = rootEl?.querySelector('.admin-shell');
     const toggleButton = rootEl?.querySelector('#sidebar-toggle-btn');
@@ -80,7 +131,9 @@ $(document).ready(function() {
   function attachAdminViewSwitching(rootEl, onViewOpen) {
     const viewButtons = rootEl?.querySelectorAll('.admin-nav-link[data-view-target]');
     const views = rootEl?.querySelectorAll('.admin-view');
-    if (!viewButtons.length || !views.length) return;
+    if (!viewButtons.length || !views.length) {
+      return { activateView: function() {} };
+    }
 
     const activateView = function(targetId) {
       views.forEach(function(viewEl) {
@@ -105,6 +158,8 @@ $(document).ready(function() {
         }
       });
     });
+
+    return { activateView };
   }
 
   function attachEmployeeModal(rootEl) {
@@ -163,6 +218,11 @@ $(document).ready(function() {
             document.querySelector('#new-position'))
           ?.value
           ?.trim() ?? '';
+      const phone =
+        (rootEl?.querySelector('#new-phone') ||
+            document.querySelector('#new-phone'))
+          ?.value
+          ?.trim() ?? '';
       const username =
         (rootEl?.querySelector('#new-username') ||
             document.querySelector('#new-username'))
@@ -189,6 +249,7 @@ $(document).ready(function() {
             password,
             full_name: fullName || null,
             position: position || null,
+            phone: phone || null,
           }),
         });
 
@@ -210,104 +271,14 @@ $(document).ready(function() {
     });
   }
 
-  function getDashboardMockData(businessType) {
-    const normalized = normalizeBusinessType(businessType);
-
-    if (normalized === 'rent-a-car') {
-      return {
-        availableCount: 19,
-        taken: [
-          {
-            keyTag: 'RC-A17',
-            keyFor: 'VW Golf (A17)',
-            takenBy: 'Amar Kovac',
-            checkoutAt: '14:05',
-            expectedReturnAt: '16:00',
-            status: 'due_soon',
-          },
-          {
-            keyTag: 'RC-B04',
-            keyFor: 'Skoda Octavia (B04)',
-            takenBy: 'Lejla Hadzic',
-            checkoutAt: '12:20',
-            expectedReturnAt: '13:30',
-            status: 'overdue',
-          },
-          {
-            keyTag: 'RC-C11',
-            keyFor: 'Audi A3 (C11)',
-            takenBy: 'Nedim Smajic',
-            checkoutAt: '13:48',
-            expectedReturnAt: '17:15',
-            status: 'on_time',
-          },
-          {
-            keyTag: 'RC-D09',
-            keyFor: 'Renault Clio (D09)',
-            takenBy: 'Dino Alic',
-            checkoutAt: '15:02',
-            expectedReturnAt: '18:00',
-            status: 'on_time',
-          },
-        ],
-        events: [
-          { at: '15:12', text: 'Key RC-D09 checked out by Dino Alic (counter).' },
-          { at: '14:56', text: 'Key RC-A17 reassigned from walk-in to online booking #R-393.' },
-          { at: '14:22', text: 'Late reminder sent for key RC-B04 (15 min overdue).' },
-          { at: '13:45', text: 'Key RC-C11 passed security checklist before release.' },
-        ],
-      };
-    }
-
-    return {
-      availableCount: 27,
-      taken: [
-        {
-          keyTag: 'HM-201',
-          keyFor: 'Room 201',
-          takenBy: 'Lejla S. (Housekeeping)',
-          checkoutAt: '10:12',
-          expectedReturnAt: '11:00',
-          status: 'overdue',
-        },
-        {
-          keyTag: 'HM-315',
-          keyFor: 'Room 315',
-          takenBy: 'Marko T. (Maintenance)',
-          checkoutAt: '14:18',
-          expectedReturnAt: '15:10',
-          status: 'due_soon',
-        },
-        {
-          keyTag: 'HM-122',
-          keyFor: 'Room 122',
-          takenBy: 'Anela H. (Front Desk)',
-          checkoutAt: '13:41',
-          expectedReturnAt: '16:30',
-          status: 'on_time',
-        },
-        {
-          keyTag: 'HM-M01',
-          keyFor: 'Main Storage',
-          takenBy: 'Jasmin K. (Supervisor)',
-          checkoutAt: '15:01',
-          expectedReturnAt: '17:30',
-          status: 'on_time',
-        },
-      ],
-      events: [
-        { at: '15:14', text: 'Key HM-M01 signed out by supervisor for inventory check.' },
-        { at: '14:48', text: 'Room 315 key assigned to maintenance for AC fix.' },
-        { at: '14:26', text: 'Overdue reminder sent to Housekeeping for Room 201 key.' },
-        { at: '13:53', text: 'Front desk checked out Room 122 key for VIP arrival prep.' },
-      ],
-    };
-  }
-
-  function attachDashboardData(rootEl, businessType) {
+  function attachDashboardData(rootEl) {
+    const session = getSession();
+    const token = session?.access_token;
     const takenRowsEl = rootEl?.querySelector('#dash-taken-rows');
     const eventsListEl = rootEl?.querySelector('#dash-events-list');
-    if (!takenRowsEl || !eventsListEl) return;
+    if (!takenRowsEl || !eventsListEl || !token) {
+      return { refreshDashboard: function() {} };
+    }
 
     const kpiTakenEl = rootEl?.querySelector('#dash-kpi-taken');
     const kpiOverdueEl = rootEl?.querySelector('#dash-kpi-overdue');
@@ -324,51 +295,97 @@ $(document).ready(function() {
         .replaceAll("'", '&#39;');
     };
 
-    const statusMetaByCode = {
-      overdue: { label: 'Overdue', cssClass: 'is-overdue' },
-      due_soon: { label: 'Due Soon', cssClass: 'is-due-soon' },
-      on_time: { label: 'On Time', cssClass: 'is-ok' },
+    const formatTime = function(value) {
+      if (!value) return '-';
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) return '-';
+      return parsed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
 
-    const dashboardData = getDashboardMockData(businessType);
-    const overdueCount = dashboardData.taken.filter(function(item) { return item.status === 'overdue'; }).length;
-    const dueSoonCount = dashboardData.taken.filter(function(item) { return item.status === 'due_soon'; }).length;
-    const takenCount = dashboardData.taken.length;
+    const actorName = function(eventItem) {
+      if (!eventItem) return 'Unknown user';
+      if (eventItem.actor_name) {
+        return `${eventItem.actor_name}${eventItem.actor_position ? ` (${eventItem.actor_position})` : ''}`;
+      }
+      return 'Unknown user';
+    };
 
-    if (kpiTakenEl) kpiTakenEl.textContent = String(takenCount);
-    if (kpiOverdueEl) kpiOverdueEl.textContent = String(overdueCount);
-    if (kpiDueSoonEl) kpiDueSoonEl.textContent = String(dueSoonCount);
-    if (kpiAvailableEl) kpiAvailableEl.textContent = String(dashboardData.availableCount);
-    if (updatedAtEl) {
-      updatedAtEl.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    }
+    const eventText = function(eventItem, keyItem) {
+      const action = String(eventItem.action || '').toLowerCase();
+      const verb = action === 'returned' ? 'returned' : 'checked out';
+      const suffix = eventItem.message ? `: ${eventItem.message}` : '';
+      return `Key ${keyItem?.key_code || eventItem.key_code || '-'} ${verb} by ${actorName(eventItem)}${suffix}`;
+    };
 
-    if (!dashboardData.taken.length) {
-      takenRowsEl.innerHTML = '<tr><td colspan="6">No keys currently taken.</td></tr>';
-    } else {
-      takenRowsEl.innerHTML = dashboardData.taken.map(function(item) {
-        const statusMeta = statusMetaByCode[item.status] || statusMetaByCode.on_time;
+    const renderDashboard = function(dashboard) {
+      const summary = dashboard.summary || {};
+      const takenKeys = dashboard.taken_keys || [];
+      const recentEvents = dashboard.recent_events || [];
+
+      if (kpiTakenEl) kpiTakenEl.textContent = String(summary.checked_out || 0);
+      if (kpiOverdueEl) kpiOverdueEl.textContent = String(summary.maintenance || 0);
+      if (kpiDueSoonEl) kpiDueSoonEl.textContent = String(summary.lost || 0);
+      if (kpiAvailableEl) kpiAvailableEl.textContent = String(summary.available || 0);
+      if (updatedAtEl) {
+        updatedAtEl.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+
+      if (!takenKeys.length) {
+        takenRowsEl.innerHTML = '<tr><td colspan="6">No keys currently taken.</td></tr>';
+      } else {
+        takenRowsEl.innerHTML = takenKeys.map(function(item) {
+          const takenBy = item.taken_by
+            ? `${item.taken_by}${item.taken_by_position ? ` (${item.taken_by_position})` : ''}`
+            : 'Unknown user';
+          return `
+            <tr>
+              <td>${escapeHtml(item.key_code)}</td>
+              <td>${escapeHtml(item.note || item.key_code)}</td>
+              <td>${escapeHtml(takenBy)}</td>
+              <td>${escapeHtml(formatTime(item.checkout_at))}</td>
+              <td>${escapeHtml(formatTime(item.updated_at))}</td>
+              <td><span class="key-status-pill is-ok">On Time</span></td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      if (!recentEvents.length) {
+        eventsListEl.innerHTML = '<li><span class="dashboard-event-text">No key events yet.</span></li>';
+        return;
+      }
+
+      eventsListEl.innerHTML = recentEvents.map(function(eventItem) {
         return `
-          <tr>
-            <td>${escapeHtml(item.keyTag)}</td>
-            <td>${escapeHtml(item.keyFor)}</td>
-            <td>${escapeHtml(item.takenBy)}</td>
-            <td>${escapeHtml(item.checkoutAt)}</td>
-            <td>${escapeHtml(item.expectedReturnAt)}</td>
-            <td><span class="key-status-pill ${statusMeta.cssClass}">${statusMeta.label}</span></td>
-          </tr>
+          <li>
+            <span class="dashboard-event-meta">${escapeHtml(formatTime(eventItem.created_at))}</span>
+            <span class="dashboard-event-text">${escapeHtml(eventText(eventItem))}</span>
+          </li>
         `;
       }).join('');
-    }
+    };
 
-    eventsListEl.innerHTML = dashboardData.events.map(function(eventItem) {
-      return `
-        <li>
-          <span class="dashboard-event-meta">${escapeHtml(eventItem.at)}</span>
-          <span class="dashboard-event-text">${escapeHtml(eventItem.text)}</span>
-        </li>
-      `;
-    }).join('');
+    const loadDashboard = async function() {
+      takenRowsEl.innerHTML = '<tr><td colspan="6">Loading dashboard...</td></tr>';
+      eventsListEl.innerHTML = '<li><span class="dashboard-event-text">Loading recent activity...</span></li>';
+
+      try {
+        const response = await fetch(`${backendBaseUrl}/api/keys/dashboard`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.message || payload.details || 'Loading dashboard failed');
+        }
+
+        renderDashboard(payload);
+      } catch (error) {
+        takenRowsEl.innerHTML = '<tr><td colspan="6">Failed to load dashboard.</td></tr>';
+        eventsListEl.innerHTML = `<li><span class="dashboard-event-text">${escapeHtml(error.message || 'Loading dashboard failed')}</span></li>`;
+      }
+    };
+
+    return { refreshDashboard: loadDashboard };
   }
 
   function attachKeyModal(rootEl) {
@@ -635,7 +652,7 @@ $(document).ready(function() {
     });
   }
 
-  function attachKeysManagement(rootEl) {
+  function attachKeysManagement(rootEl, onChanged, onHistoryOpen) {
     const session = getSession();
     const token = session?.access_token;
     const tableBody = rootEl?.querySelector('#keys-table-body');
@@ -850,6 +867,7 @@ $(document).ready(function() {
 
             message.textContent = `Status updated for ${payload.key?.key_code || keyItem.key_code}.`;
             await loadKeys();
+            if (typeof onChanged === 'function') onChanged();
           } catch (error) {
             message.textContent = error.message || 'Change status failed';
           }
@@ -895,6 +913,7 @@ $(document).ready(function() {
 
           message.textContent = `Updated ${payload.key?.key_code || nextName}.`;
           await loadKeys();
+          if (typeof onChanged === 'function') onChanged();
         } catch (error) {
           message.textContent = error.message || 'Update key failed';
         }
@@ -926,41 +945,17 @@ $(document).ready(function() {
 
           message.textContent = `Note saved for ${payload.key?.key_code || keyItem.key_code}.`;
           await loadKeys();
+          if (typeof onChanged === 'function') onChanged();
         } catch (error) {
           message.textContent = error.message || 'Add note failed';
         }
       }
 
         if (action === 'history') {
-        try {
-          const response = await fetch(`${backendBaseUrl}/api/keys/${keyId}/events?limit=25`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const payload = await response.json();
-          if (!response.ok) {
-            throw new Error(payload.message || payload.details || 'History load failed');
+          if (typeof onHistoryOpen === 'function') {
+            onHistoryOpen(keyItem);
           }
-
-          const events = payload.events || [];
-          if (!events.length) {
-            window.alert(`${keyItem.key_code} history:\n\nNo events yet.`);
-            return;
-          }
-
-          const historyText = events.map(function(item) {
-            const at = item.created_at ? new Date(item.created_at).toLocaleString() : '-';
-            const actor = item.actor_name
-              ? `${item.actor_name}${item.actor_position ? ` (${item.actor_position})` : ''}`
-              : 'Unknown user';
-            const msg = item.message ? ` | ${item.message}` : '';
-            return `${at} | ${String(item.action || '').toUpperCase()} | ${actor}${msg}`;
-          }).join('\n');
-
-          window.alert(`${keyItem.key_code} history:\n\n${historyText}`);
-        } catch (error) {
-          message.textContent = error.message || 'History load failed';
         }
-      }
 
         if (action === 'qr') {
           const deepLink = buildKeyDeepLink(keyItem.qr_token || '', keyItem);
@@ -985,6 +980,7 @@ $(document).ready(function() {
 
             message.textContent = `Deleted ${keyItem.key_code}.`;
             await loadKeys();
+            if (typeof onChanged === 'function') onChanged();
           } catch (error) {
             message.textContent = error.message || 'Delete key failed';
           }
@@ -997,6 +993,172 @@ $(document).ready(function() {
     return {
       refreshKeys: function() {
         loadKeys();
+      },
+    };
+  }
+
+  function attachKeyHistoryManagement(rootEl) {
+    const session = getSession();
+    const token = session?.access_token;
+    const keySelect = rootEl?.querySelector('#history-key-select');
+    const actionFilter = rootEl?.querySelector('#history-action-filter');
+    const refreshButton = rootEl?.querySelector('#history-refresh-btn');
+    const timeline = rootEl?.querySelector('#history-timeline');
+    const message = rootEl?.querySelector('#history-message');
+
+    if (!token || !keySelect || !actionFilter || !refreshButton || !timeline || !message) {
+      return {
+        refreshHistoryKeys: function() {},
+        openKeyHistory: function() {},
+      };
+    }
+
+    const escapeHtml = function(value) {
+      return String(value || '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    };
+
+    const formatDateTime = function(value) {
+      if (!value) return '-';
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) return '-';
+      return parsed.toLocaleString([], {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    };
+
+    const actorName = function(eventItem) {
+      if (eventItem.actor_name) {
+        return `${eventItem.actor_name}${eventItem.actor_position ? ` (${eventItem.actor_position})` : ''}`;
+      }
+      return 'Unknown user';
+    };
+
+    const actionLabel = function(action) {
+      const normalized = String(action || '').toLowerCase();
+      if (normalized === 'taken') return 'Taken';
+      if (normalized === 'returned') return 'Returned';
+      return normalized || 'Event';
+    };
+
+    const renderKeys = function(keys, selectedKeyId) {
+      if (!keys.length) {
+        keySelect.innerHTML = '<option value="">No keys available</option>';
+        return;
+      }
+
+      keySelect.innerHTML = keys.map(function(keyItem) {
+        const selected = keyItem.id === selectedKeyId ? ' selected' : '';
+        return `<option value="${escapeHtml(keyItem.id)}"${selected}>${escapeHtml(keyItem.key_code)}</option>`;
+      }).join('');
+    };
+
+    const renderEvents = function(events) {
+      const selectedAction = actionFilter.value;
+      const filteredEvents = selectedAction === 'all'
+        ? events
+        : events.filter(function(eventItem) {
+            return String(eventItem.action || '').toLowerCase() === selectedAction;
+          });
+
+      if (!filteredEvents.length) {
+        timeline.innerHTML = '<li class="history-empty">No events match this filter.</li>';
+        return;
+      }
+
+      timeline.innerHTML = filteredEvents.map(function(eventItem) {
+        const normalizedAction = String(eventItem.action || '').toLowerCase();
+        const note = eventItem.message
+          ? `<p class="history-event-note">${escapeHtml(eventItem.message)}</p>`
+          : '';
+        return `
+          <li class="history-event history-event-${escapeHtml(normalizedAction || 'default')}">
+            <div class="history-event-marker"></div>
+            <div class="history-event-body">
+              <div class="history-event-head">
+                <span class="history-event-action">${escapeHtml(actionLabel(eventItem.action))}</span>
+                <time>${escapeHtml(formatDateTime(eventItem.created_at))}</time>
+              </div>
+              <p class="history-event-actor">${escapeHtml(actorName(eventItem))}</p>
+              ${note}
+            </div>
+          </li>
+        `;
+      }).join('');
+    };
+
+    let currentEvents = [];
+
+    const loadEventsForSelectedKey = async function() {
+      const keyId = keySelect.value;
+      currentEvents = [];
+      message.textContent = '';
+
+      if (!keyId) {
+        timeline.innerHTML = '<li class="history-empty">Select a key to view history.</li>';
+        return;
+      }
+
+      timeline.innerHTML = '<li class="history-empty">Loading history...</li>';
+
+      try {
+        const response = await fetch(`${backendBaseUrl}/api/keys/${keyId}/events?limit=100`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.message || payload.details || 'History load failed');
+        }
+
+        currentEvents = payload.events || [];
+        renderEvents(currentEvents);
+      } catch (error) {
+        timeline.innerHTML = '<li class="history-empty">Failed to load history.</li>';
+        message.textContent = error.message || 'History load failed';
+      }
+    };
+
+    const refreshHistoryKeys = async function(selectedKeyId) {
+      message.textContent = '';
+      try {
+        const response = await fetch(`${backendBaseUrl}/api/keys`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.message || payload.details || 'Loading keys failed');
+        }
+
+        const keys = payload.keys || [];
+        renderKeys(keys, selectedKeyId || keySelect.value);
+        await loadEventsForSelectedKey();
+      } catch (error) {
+        keySelect.innerHTML = '<option value="">Failed to load keys</option>';
+        timeline.innerHTML = '<li class="history-empty">Failed to load history.</li>';
+        message.textContent = error.message || 'Loading keys failed';
+      }
+    };
+
+    keySelect.addEventListener('change', loadEventsForSelectedKey);
+    actionFilter.addEventListener('change', function() {
+      renderEvents(currentEvents);
+    });
+    refreshButton.addEventListener('click', function() {
+      refreshHistoryKeys(keySelect.value);
+    });
+
+    return {
+      refreshHistoryKeys,
+      openKeyHistory: async function(keyItem) {
+        await refreshHistoryKeys(keyItem?.id);
       },
     };
   }
@@ -1021,17 +1183,19 @@ $(document).ready(function() {
 
     const renderRows = function(users) {
       if (!users.length) {
-        tableBody.innerHTML = '<tr><td colspan="3">No employees yet.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="4">No employees yet.</td></tr>';
         return;
       }
 
       tableBody.innerHTML = users.map(function(user) {
         const displayName = escapeHtml(user.full_name || 'Unnamed employee');
         const displayPosition = escapeHtml(user.position || '-');
+        const displayPhone = escapeHtml(user.phone || '-');
         return `
           <tr data-company-user-id="${user.id}">
             <td data-col="name">${displayName}</td>
             <td data-col="position">${displayPosition}</td>
+            <td data-col="phone">${displayPhone}</td>
             <td>
               <div class="employee-actions">
                 <button type="button" class="employee-action-btn edit">Edit</button>
@@ -1075,10 +1239,14 @@ $(document).ready(function() {
         const currentName = row?.querySelector('td[data-col=\"name\"]')?.textContent?.trim() || '';
         const currentPositionRaw = row?.querySelector('td[data-col=\"position\"]')?.textContent?.trim() || '';
         const currentPosition = currentPositionRaw === '-' ? '' : currentPositionRaw;
+        const currentPhoneRaw = row?.querySelector('td[data-col=\"phone\"]')?.textContent?.trim() || '';
+        const currentPhone = currentPhoneRaw === '-' ? '' : currentPhoneRaw;
         const nextName = window.prompt('Edit employee name:', currentName);
         if (nextName === null) return;
         const nextPosition = window.prompt('Edit employee position:', currentPosition);
         if (nextPosition === null) return;
+        const nextPhone = window.prompt('Edit employee phone:', currentPhone);
+        if (nextPhone === null) return;
 
         try {
           const response = await fetch(`${backendBaseUrl}/api/admin/users/${companyUserId}`, {
@@ -1090,6 +1258,7 @@ $(document).ready(function() {
             body: JSON.stringify({
               full_name: nextName.trim(),
               position: nextPosition.trim(),
+              phone: nextPhone.trim(),
             }),
           });
           const payload = await response.json();
@@ -1136,24 +1305,165 @@ $(document).ready(function() {
       return;
     }
 
-    const businessType = normalizeBusinessType(session?.profile?.business_type);
-    attachDashboardData(rootEl, businessType);
+    const dashboardData = attachDashboardData(rootEl);
     const employeesManagement = attachEmployeesManagement(rootEl);
-    const keysManagement = attachKeysManagement(rootEl);
+    const keyHistoryManagement = attachKeyHistoryManagement(rootEl);
     const modalController = attachEmployeeModal(rootEl);
     const keyModalController = attachKeyModal(rootEl);
+    let adminViews = { activateView: function() {} };
+    const keysManagement = attachKeysManagement(rootEl, dashboardData.refreshDashboard, function(keyItem) {
+      adminViews.activateView('key-history-view');
+      keyHistoryManagement.openKeyHistory(keyItem);
+    });
     attachCreateUserHandler(rootEl, employeesManagement.refreshEmployees, modalController.closeModal);
-    attachCreateKeyHandler(rootEl, keysManagement.refreshKeys, keyModalController.closeModal);
+    attachCreateKeyHandler(rootEl, function() {
+      keysManagement.refreshKeys();
+      dashboardData.refreshDashboard();
+      keyHistoryManagement.refreshHistoryKeys();
+    }, keyModalController.closeModal);
     attachSidebarToggle(rootEl);
-    attachAdminViewSwitching(rootEl, function(targetId) {
+    adminViews = attachAdminViewSwitching(rootEl, function(targetId) {
+      if (targetId === 'dashboard-view') dashboardData.refreshDashboard();
       if (targetId === 'employees-view') employeesManagement.refreshEmployees();
       if (targetId === 'keys-view') keysManagement.refreshKeys();
+      if (targetId === 'key-history-view') keyHistoryManagement.refreshHistoryKeys();
     });
+    dashboardData.refreshDashboard();
     keysManagement.refreshKeys();
 
     const logoutButton = rootEl?.querySelector('#logout-btn');
     logoutButton?.addEventListener('click', function() {
       handleLogout(logoutButton);
+    });
+  }
+
+  function setupSettingsPage(rootEl) {
+    const session = getSession();
+    if (!session || session?.profile?.role !== 'admin') {
+      window.location.hash = 'loginpage';
+      return;
+    }
+
+    attachSidebarToggle(rootEl);
+    attachSettingsNavigation(rootEl);
+    hydrateSettingsProfile(rootEl, session);
+
+    const logoutButton = rootEl?.querySelector('#settings-logout-btn');
+    logoutButton?.addEventListener('click', function() {
+      handleLogout(logoutButton);
+    });
+
+    const form = rootEl?.querySelector('#change-password-form');
+    const profileForm = rootEl?.querySelector('#profile-form');
+    const profileMessage = rootEl?.querySelector('#profile-message');
+    const saveProfileBtn = rootEl?.querySelector('#save-profile-btn');
+    const profileFullNameEl = rootEl?.querySelector('#profile-full-name');
+    const profilePositionEl = rootEl?.querySelector('#profile-position');
+    const currentPasswordEl = rootEl?.querySelector('#current-password');
+    const newPasswordEl = rootEl?.querySelector('#new-password-settings');
+    const confirmPasswordEl = rootEl?.querySelector('#confirm-password');
+    const messageEl = rootEl?.querySelector('#change-password-message');
+    const buttonEl = rootEl?.querySelector('#change-password-btn');
+
+    if (!form || !profileForm || !profileMessage || !saveProfileBtn || !profileFullNameEl || !profilePositionEl || !currentPasswordEl || !newPasswordEl || !confirmPasswordEl || !messageEl || !buttonEl) return;
+
+    profileForm.addEventListener('submit', async function(event) {
+      event.preventDefault();
+
+      const fullName = profileFullNameEl.value.trim();
+      const position = profilePositionEl.value.trim();
+
+      profileMessage.textContent = '';
+      saveProfileBtn.disabled = true;
+      saveProfileBtn.textContent = 'Saving...';
+
+      try {
+        const response = await fetch(`${backendBaseUrl}/api/auth/profile`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            full_name: fullName,
+            position,
+          }),
+        });
+
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.message || payload.details || 'Profile update failed');
+        }
+
+        const nextSession = {
+          ...session,
+          profile: {
+            ...session.profile,
+            full_name: payload.profile?.full_name || fullName || null,
+            position: payload.profile?.position || position || null,
+          },
+        };
+        saveSession(nextSession);
+        hydrateSettingsProfile(rootEl, nextSession);
+        profileMessage.textContent = 'Profile updated successfully.';
+      } catch (error) {
+        profileMessage.textContent = error.message || 'Profile update failed';
+      } finally {
+        saveProfileBtn.disabled = false;
+        saveProfileBtn.textContent = 'Save profile';
+      }
+    });
+
+    form.addEventListener('submit', async function(event) {
+      event.preventDefault();
+
+      const currentPassword = currentPasswordEl.value;
+      const newPassword = newPasswordEl.value;
+      const confirmPassword = confirmPasswordEl.value;
+
+      if (newPassword !== confirmPassword) {
+        messageEl.textContent = 'New password and confirmation do not match.';
+        return;
+      }
+
+      if (newPassword.length < 8) {
+        messageEl.textContent = 'New password must be at least 8 characters long.';
+        return;
+      }
+
+      messageEl.textContent = '';
+      buttonEl.disabled = true;
+      buttonEl.textContent = 'Updating...';
+
+      try {
+        const response = await fetch(`${backendBaseUrl}/api/auth/change-password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${session.access_token}`,
+          },
+          body: JSON.stringify({
+            current_password: currentPassword,
+            new_password: newPassword,
+          }),
+        });
+
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.message || payload.details || 'Password update failed');
+        }
+
+        clearSession();
+        messageEl.textContent = 'Password updated. Please log in again.';
+        setTimeout(function() {
+          window.location.hash = 'loginpage';
+        }, 900);
+      } catch (error) {
+        messageEl.textContent = error.message || 'Password update failed';
+      } finally {
+        buttonEl.disabled = false;
+        buttonEl.textContent = 'Update password';
+      }
     });
   }
 
@@ -1237,6 +1547,15 @@ $(document).ready(function() {
     onReady: function() {
       const rootEl = document.getElementById('homepage');
       setupHomepage(rootEl);
+    }
+  });
+
+  app.route({
+    view: 'settings',
+    load: 'settings.html',
+    onReady: function() {
+      const rootEl = document.getElementById('settings');
+      setupSettingsPage(rootEl);
     }
   });
 

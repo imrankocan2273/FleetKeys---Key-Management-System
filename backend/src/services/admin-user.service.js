@@ -8,7 +8,7 @@ const {
   findCompanyUserById,
 } = require('../daos/admin-user.dao');
 
-async function createCompanyUser({ companyId, email, password, fullName, position }) {
+async function createCompanyUser({ companyId, email, password, fullName, position, phone }) {
   const authResult = await createAuthUser({ email, password });
   if (!authResult.ok) {
     return { ok: false, error: authResult.error };
@@ -24,6 +24,7 @@ async function createCompanyUser({ companyId, email, password, fullName, positio
     authUserId,
     fullName,
     position,
+    phone,
   });
 
   if (!dbResult.ok) {
@@ -39,6 +40,7 @@ async function createCompanyUser({ companyId, email, password, fullName, positio
       role: dbResult.row.role,
       full_name: dbResult.row.full_name,
       position: dbResult.row.position,
+      phone: dbResult.row.phone,
       company_id: dbResult.row.company_id,
       company_user_id: dbResult.row.id,
     },
@@ -54,7 +56,7 @@ async function listCompanyUsers({ companyId }) {
   return { ok: true, users: result.rows };
 }
 
-async function updateCompanyUser({ companyId, companyUserId, fullName, position }) {
+async function updateCompanyUser({ companyId, companyUserId, fullName, position, phone }) {
   const existing = await findCompanyUserById({ companyId, companyUserId });
   if (!existing.ok) {
     return { ok: false, error: existing.error };
@@ -68,6 +70,7 @@ async function updateCompanyUser({ companyId, companyUserId, fullName, position 
     companyUserId,
     fullName,
     position,
+    phone,
   });
   if (!updated.ok) {
     return { ok: false, error: updated.error };

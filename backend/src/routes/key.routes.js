@@ -2,6 +2,7 @@ const express = require('express');
 
 const {
   listKeys,
+  getKeysDashboard,
   getKey,
   createKey,
   updateKey,
@@ -19,6 +20,7 @@ const keyRouter = express.Router();
 keyRouter.use(requireAuth, requireTenantContext);
 
 keyRouter.get('/', listKeys);
+keyRouter.get('/dashboard', getKeysDashboard);
 keyRouter.post('/scan', scanKeyEvent);
 keyRouter.get('/:keyId/events', listKeyEvents);
 keyRouter.post('/:keyId/events', addKeyEvent);

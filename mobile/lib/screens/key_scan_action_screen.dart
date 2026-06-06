@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../services/authenticated_api_client.dart';
 import '../services/keys_service.dart';
 
 class KeyScanActionScreen extends StatefulWidget {
@@ -11,6 +12,7 @@ class KeyScanActionScreen extends StatefulWidget {
     this.keyNote,
     required this.userDisplayName,
     required this.accessToken,
+    required this.apiClient,
     required this.onDone,
     required this.onCancel,
   });
@@ -21,6 +23,7 @@ class KeyScanActionScreen extends StatefulWidget {
   final String? keyNote;
   final String userDisplayName;
   final String accessToken;
+  final AuthenticatedApiClient apiClient;
   final VoidCallback onDone;
   final VoidCallback onCancel;
 
@@ -32,7 +35,7 @@ class _KeyScanActionScreenState extends State<KeyScanActionScreen>
     with SingleTickerProviderStateMixin {
   static const Color blue = Color(0xFF145D84);
 
-  final _keysService = KeysService();
+  late final KeysService _keysService;
 
   bool _loading = false;
   bool _loadingPreview = true;
@@ -46,6 +49,7 @@ class _KeyScanActionScreenState extends State<KeyScanActionScreen>
   @override
   void initState() {
     super.initState();
+    _keysService = KeysService(apiClient: widget.apiClient);
     _successController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
@@ -54,7 +58,9 @@ class _KeyScanActionScreenState extends State<KeyScanActionScreen>
       _preview = ScannedKeyPreview(
         keyCode: widget.keyName!,
         status: (widget.keyStatus ?? 'available').trim(),
-        note: (widget.keyNote ?? '').trim().isEmpty ? null : widget.keyNote!.trim(),
+        note: (widget.keyNote ?? '').trim().isEmpty
+            ? null
+            : widget.keyNote!.trim(),
       );
       _loadingPreview = false;
       return;
@@ -162,151 +168,162 @@ class _KeyScanActionScreenState extends State<KeyScanActionScreen>
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 460),
                   child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x14000000),
-                      blurRadius: 30,
-                      offset: Offset(0, 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x14000000),
+                          blurRadius: 30,
+                          offset: Offset(0, 14),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
                     padding: const EdgeInsets.all(20),
                     child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Align(
-                      child: CircleAvatar(
-                        radius: 30,
-                        backgroundColor: Color(0xFFEAF3F9),
-                        child: Icon(Icons.key_rounded, color: blue, size: 30),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    const Text(
-                      'Choose action for this key',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'This action updates key status in real time.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xFF5F6B7A),
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF6F8FA),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFDCE3EA)),
-                      ),
-                      child: _loadingPreview
-                          ? const Center(
-                              child: SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                            )
-                          : Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Key Name: ${_preview?.keyCode ?? 'Unknown key'}',
-                                  style: const TextStyle(
-                                    color: Color(0xFF425466),
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Status: ${_statusLabel(_preview?.status ?? 'available')}',
-                                  style: const TextStyle(
-                                    color: Color(0xFF425466),
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                if ((_preview?.note ?? '').isNotEmpty) ...[
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Note: ${_preview!.note!}',
-                                    style: const TextStyle(
-                                      color: Color(0xFF425466),
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Align(
+                          child: CircleAvatar(
+                            radius: 30,
+                            backgroundColor: Color(0xFFEAF3F9),
+                            child: Icon(
+                              Icons.key_rounded,
+                              color: blue,
+                              size: 30,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        const Text(
+                          'Choose action for this key',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'This action updates key status in real time.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color(0xFF5F6B7A),
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF6F8FA),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFDCE3EA)),
+                          ),
+                          child: _loadingPreview
+                              ? const Center(
+                                  child: SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
                                     ),
                                   ),
-                                ],
-                              ],
+                                )
+                              : Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Key Name: ${_preview?.keyCode ?? 'Unknown key'}',
+                                      style: const TextStyle(
+                                        color: Color(0xFF425466),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Status: ${_statusLabel(_preview?.status ?? 'available')}',
+                                      style: const TextStyle(
+                                        color: Color(0xFF425466),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    if ((_preview?.note ?? '').isNotEmpty) ...[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Note: ${_preview!.note!}',
+                                        style: const TextStyle(
+                                          color: Color(0xFF425466),
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                        ),
+                        if (!_loadingPreview && _preview == null) ...[
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Key details not found for this QR.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Color(0xFFB33232),
+                              fontWeight: FontWeight.w600,
                             ),
-                    ),
-                    if (!_loadingPreview && _preview == null) ...[
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Key details not found for this QR.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Color(0xFFB33232),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 18),
-                    SizedBox(
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed: _loading ? null : () => _submit('taken'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: blue,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ],
+                        const SizedBox(height: 18),
+                        SizedBox(
+                          height: 52,
+                          child: ElevatedButton(
+                            onPressed: _loading ? null : () => _submit('taken'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: blue,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: Text(_loading ? 'Processing...' : 'Take It'),
                           ),
                         ),
-                        child: Text(_loading ? 'Processing...' : 'Take It'),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      height: 52,
-                      child: OutlinedButton(
-                        onPressed: _loading ? null : () => _submit('returned'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: blue,
-                          side: const BorderSide(color: Color(0xFF8EA7BA)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          height: 52,
+                          child: OutlinedButton(
+                            onPressed: _loading
+                                ? null
+                                : () => _submit('returned'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: blue,
+                              side: const BorderSide(color: Color(0xFF8EA7BA)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: const Text('Give It Back'),
                           ),
                         ),
-                        child: const Text('Give It Back'),
-                      ),
+                        if (_error != null) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            _error!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Color(0xFFB33232),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-                    if (_error != null) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        _error!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Color(0xFFB33232),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                    ],
                   ),
-                ),
                 ),
               ],
             ),
@@ -319,10 +336,8 @@ class _KeyScanActionScreenState extends State<KeyScanActionScreen>
                       tween: Tween(begin: 0.82, end: 1),
                       duration: const Duration(milliseconds: 320),
                       curve: Curves.easeOutBack,
-                      builder: (context, scale, child) => Transform.scale(
-                        scale: scale,
-                        child: child,
-                      ),
+                      builder: (context, scale, child) =>
+                          Transform.scale(scale: scale, child: child),
                       child: Container(
                         margin: const EdgeInsets.symmetric(horizontal: 28),
                         padding: const EdgeInsets.fromLTRB(22, 24, 22, 22),

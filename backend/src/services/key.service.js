@@ -9,6 +9,7 @@ const {
   selectCompanyUserIdByAuthUserId,
   selectKeyEventsByKeyId,
   selectCompanyUsersByAuthUserIds,
+  selectRecentKeyEvents,
   insertKeyEvent,
   executeScanKeyEvent,
 } = require('../daos/key.dao');
@@ -154,6 +155,7 @@ async function listCompanyKeyEvents({ companyId, keyId, limit }) {
       {
         full_name: row.full_name || null,
         position: row.position || null,
+        phone: row.phone || null,
       },
     ])
   );
@@ -164,10 +166,96 @@ async function listCompanyKeyEvents({ companyId, keyId, limit }) {
       ...eventRow,
       actor_name: actor?.full_name || null,
       actor_position: actor?.position || null,
+      actor_phone: actor?.phone || null,
     };
   });
 
   return { ok: true, events };
+}
+
+async function getCompanyKeysDashboard({ companyId }) {
+  const keysResult = await selectKeys({ companyId });
+  if (!keysResult.ok) return { ok: false, error: keysResult.error };
+
+  const eventsResult = await selectRecentKeyEvents({ companyId, limit: 50 });
+  if (!eventsResult.ok) return { ok: false, error: eventsResult.error };
+
+  const authUserIds = eventsResult.rows
+    .map((eventRow) => eventRow.user_id)
+    .filter(Boolean);
+
+  const usersResult = await selectCompanyUsersByAuthUserIds({
+    companyId,
+    authUserIds,
+  });
+  if (!usersResult.ok) return { ok: false, error: usersResult.error };
+
+  const keyById = new Map(keysResult.rows.map((keyRow) => [keyRow.id, keyRow]));
+  const actorByAuthUserId = new Map(
+    usersResult.rows.map((row) => [
+      row.auth_user_id,
+      {
+        full_name: row.full_name || null,
+        position: row.position || null,
+        phone: row.phone || null,
+      },
+    ])
+  );
+
+  const summary = allowedKeyStatuses.reduce((acc, status) => {
+    acc[status] = 0;
+    return acc;
+  }, {});
+
+  keysResult.rows.forEach((keyRow) => {
+    const status = normalizeKeyStatus(keyRow.status);
+    if (Object.prototype.hasOwnProperty.call(summary, status)) {
+      summary[status] += 1;
+    }
+  });
+
+  const latestTakenEventByKeyId = new Map();
+  eventsResult.rows.forEach((eventRow) => {
+    if (eventRow.action !== 'taken') return;
+    if (!latestTakenEventByKeyId.has(eventRow.key_id)) {
+      latestTakenEventByKeyId.set(eventRow.key_id, eventRow);
+    }
+  });
+
+  const takenKeys = keysResult.rows
+    .filter((keyRow) => keyRow.status === 'checked_out')
+    .map((keyRow) => {
+      const latestTakenEvent = latestTakenEventByKeyId.get(keyRow.id);
+      const actor = latestTakenEvent ? actorByAuthUserId.get(latestTakenEvent.user_id) : null;
+      return {
+        ...keyRow,
+        checkout_at: latestTakenEvent?.created_at || null,
+        taken_by: actor?.full_name || null,
+        taken_by_position: actor?.position || null,
+        taken_by_phone: actor?.phone || null,
+      };
+    });
+
+  const events = eventsResult.rows.map((eventRow) => {
+    const actor = actorByAuthUserId.get(eventRow.user_id);
+    const key = keyById.get(eventRow.key_id);
+    return {
+      ...eventRow,
+      key_code: key?.key_code || null,
+      actor_name: actor?.full_name || null,
+      actor_position: actor?.position || null,
+      actor_phone: actor?.phone || null,
+    };
+  });
+
+  return {
+    ok: true,
+    dashboard: {
+      summary,
+      taken_keys: takenKeys,
+      recent_events: events.slice(0, 10),
+    },
+  };
 }
 
 async function addCompanyKeyEvent({ companyId, keyId, action, message, byAuthUserId }) {
@@ -242,6 +330,7 @@ module.exports = {
   updateCompanyKey,
   deleteCompanyKey,
   listCompanyKeyEvents,
+  getCompanyKeysDashboard,
   addCompanyKeyEvent,
   scanCompanyKeyEvent,
 };

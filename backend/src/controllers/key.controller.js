@@ -5,6 +5,7 @@ const {
   updateCompanyKey,
   deleteCompanyKey,
   listCompanyKeyEvents,
+  getCompanyKeysDashboard,
   addCompanyKeyEvent,
   scanCompanyKeyEvent,
 } = require('../services/key.service');
@@ -31,6 +32,20 @@ async function listKeys(req, res) {
   }
 
   return res.status(200).json({ keys: result.keys });
+}
+
+async function getKeysDashboard(req, res) {
+  const companyId = req.context?.company_id;
+  if (!companyId) {
+    return res.status(403).json({ message: 'Missing company context' });
+  }
+
+  const result = await getCompanyKeysDashboard({ companyId });
+  if (!result.ok) {
+    return res.status(400).json({ message: 'Dashboard load failed', details: result.error });
+  }
+
+  return res.status(200).json(result.dashboard);
 }
 
 async function getKey(req, res) {
@@ -227,6 +242,7 @@ async function scanKeyEvent(req, res) {
 
 module.exports = {
   listKeys,
+  getKeysDashboard,
   getKey,
   createKey,
   updateKey,

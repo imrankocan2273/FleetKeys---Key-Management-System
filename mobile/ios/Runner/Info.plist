@@ -14,6 +14,8 @@
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>fleetkeys_mobile</string>
+	<key>NSCameraUsageDescription</key>
+	<string>FleetKeys uses the camera to scan key QR codes.</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
