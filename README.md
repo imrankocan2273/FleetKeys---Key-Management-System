@@ -2,6 +2,8 @@ FleetKeys — Key Management System
 A multi-tenant system for managing physical keys (rent-a-car and hotel/motel) with a backend API, a web admin panel, and a mobile app for QR-based scanning/actions.
 **DEPLOYED APP: https://monkfish-app-6gvye.ondigitalocean.app/
 BACKEND: https://coral-app-zk7m2.ondigitalocean.app**
+Username: imrankocan2273@gmail.com
+Password: testtest
 
 **FleetKeys 1.0.0**
 
