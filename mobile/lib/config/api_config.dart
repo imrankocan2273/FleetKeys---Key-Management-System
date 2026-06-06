@@ -7,7 +7,7 @@ class ApiConfig {
   /// flutter run --dart-define=API_BASE_URL=https://tvoj-digitalocean-domen
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://127.0.0.1:4000',
+    defaultValue: 'https://coral-app-zk7m2.ondigitalocean.app',
   );
 
   static String normalizeBaseUrl(String value) {
